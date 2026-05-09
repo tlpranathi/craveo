@@ -1,0 +1,77 @@
+const User = require("../models/User")
+const jwt = require("jsonwebtoken")
+const sendResponse = require("../utils/response")
+const AppError = require("../utils/AppError")
+
+// generate JWT
+const generateToken = (userId) => {
+    return jwt.sign(
+        { id: userId }, 
+        process.env.JWT_SECRET, 
+        { expiresIn: process.env.JWT_EXPIRES_IN || "7d"}
+    )
+}
+
+// signup
+const signup = async (req, res, next) => {
+    try {
+            const {name, email, password} = req.body
+            
+            // manual input validation (before hitting the DB)
+            if (!name || !email || !password) {
+                throw new AppError("Name, email, and password are required", 400)
+            }
+
+            // check for duplicate email
+            const existingUser = await User.findOne({ email: email.toLowerCase() })
+            if (existingUser) {
+                throw new AppError("An account with this email already exists", 409)
+            }
+
+            // create user - password is hashed automatically by pre-save hook
+            const user = await User.create({name, email, password})
+
+            // generate token immediately - user is logged in after signup
+            const token = generateToken(user._id)
+
+            return sendResponse(res, 201, true, "Account created successfully", {
+                token, 
+                user: {id: user._id, name: user.name, email: user.email, role: user.role}, 
+            })
+    } catch (error) {
+        next (error)
+    }
+}
+
+const login = async (req, res, next) => {
+    try {
+        const {email, password} = req.body
+
+        // input validation
+        if (!email || !password) {
+            throw new AppError("Email and password are required", 400)
+        }
+
+        // find email by user
+        const user = await User.findOne({ email: email.toLowerCase() })
+        
+        // check user exists and password matches in 1 block - don't reveal which one failed
+        if (!user || !(await user.comparePassword(password))) {
+            throw new AppError("Invalid email or password", 401)
+        }
+
+        // generate JWT
+        const token = generateToken(user._id)
+
+        return sendResponse(res, 200, true, "Login successful", {
+            token,
+            user: {
+                id: user._id, name: user.name, email: user.email, tole: user.role
+            },
+        })    
+    } catch (error) {
+            next(error)
+    }
+}
+
+module.exports = { signup, login }
