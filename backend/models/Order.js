@@ -1,54 +1,50 @@
-// server/models/Order.js
-
 const mongoose = require("mongoose")
 
+// subschema/ nested schema
+// snapshot of item details at purchase time
 const orderItemSchema = new mongoose.Schema({
-  menuItemId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Menu",
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1,
-  },
+    menuItemId: {
+        type: mongoose.Schema.Types.ObjectId, // linking to original menu item 
+        ref: "Menu",
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
+    },
+    price: {
+        type: Number,
+        required: true
+    },
+    quantity: {
+        type: Number,
+        required: true,
+        min: 1
+    },
 })
 
-const orderSchema = new mongoose.Schema(
-  {
+// main order schema
+const orderSchema = new mongoose.Schema ({
     user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
     },
     restaurant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Restaurant",
-      required: true,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Restaurant",
+        required: true
     },
-    items: [orderItemSchema],
+    items: [orderItemSchema], // stores array of ordered items
     totalPrice: {
-      type: Number,
-      required: true,
+        type: Number,
+        required: true
     },
     status: {
-      type: String,
-      enum: ["pending", "confirmed", "preparing", "delivered", "cancelled"],
-      default: "pending",
-    },
-  },
-  {
-    timestamps: true, // createdAt = order placed time
-  }
-)
+        type: String,
+        enum: ["pending", "confirmed", "preparing", "delivered", "cancelled"],
+        default: "pending"
+    }
+}, {timestamps: true})
 
 module.exports = mongoose.model("Order", orderSchema)

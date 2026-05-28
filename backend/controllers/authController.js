@@ -1,16 +1,14 @@
 const User = require("../models/User")
 const jwt = require("jsonwebtoken")
-const sendResponse = require("../utils/response")
-const AppError = require("../utils/AppError")
+const sendResponse = require("../utils/response") // keep API responses clean
+const AppError = require("../utils/AppError") // cleaner error handling
 
 // generate JWT
 const generateToken = (userId) => {
-    return jwt.sign(
-        { id: userId }, 
-        process.env.JWT_SECRET, 
-        { expiresIn: process.env.JWT_EXPIRES_IN || "7d"}
-    )
-}
+    return jwt.sign({ id: userId }, // payload - data stored inside token
+        process.env.JWT_SECRET, // secret used to sign token, protects against fake tokens
+        { expiresIn: process.env.JWT_EXPIRES_IN || "7d"} // token expires in 7 days
+    )}
 
 // signup
 const signup = async (req, res, next) => {
@@ -66,7 +64,7 @@ const login = async (req, res, next) => {
         return sendResponse(res, 200, true, "Login successful", {
             token,
             user: {
-                id: user._id, name: user.name, email: user.email, tole: user.role
+                id: user._id, name: user.name, email: user.email, role: user.role
             },
         })    
     } catch (error) {

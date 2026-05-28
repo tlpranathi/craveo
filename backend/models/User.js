@@ -13,10 +13,10 @@ const UserSchema = new mongoose.Schema({
     email: {
         type: String,
         required: [true, "email is required"],
-        unique: true, 
+        unique: true, // creates unique index in mongoDB
         lowercase: true,
         trim: true,
-        match: [/^\S+@\S+\.\S+$/, "Enter valid email id"],
+        match: [/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[A-Za-z]{2,}$/, "Enter valid email address"],
     },
     password: {
         type: String, 
@@ -32,10 +32,11 @@ const UserSchema = new mongoose.Schema({
     timestamps: true, // adds createdAt and updatedAt automatically
 })
 
+// mongoose middleware/hook - runs automatically before saving a user document
 // pre save hook: hash passwords only when it's new or changed
 UserSchema.pre("save", async function () {
-    if (!this.isModified("password")) return next()
-    this.password = await bcrypt.hash(this.password, 10)
+    if (!this.isModified("password")) return 
+    this.password = await bcrypt.hash(this.password, 10) // 10 salt rounds
 })
 
 // instance method: compare password at login
