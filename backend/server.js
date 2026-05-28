@@ -1,7 +1,7 @@
-require("dotenv").config()
+require("dotenv").config() // loads variables from .env to process.env
 
 const express = require("express")
-const cors = require("cors")
+const cors = require("cors") // cross-origin resoure sharing - allows frontend and backend on different ports/domains to communicate
 
 const connectDB = require("./config/db")
 const authRoutes = require("./routes/authRoutes")
@@ -26,10 +26,9 @@ app.use(errorHandler)
 
 
 app.get("/", (req, res)=>{
-    res.send("feedMe API running")
+    res.send("craveo API running")
 })
 
 app.listen(5000, ()=>{
     console.log("server running on port 5000")
 })
-

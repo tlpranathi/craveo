@@ -4,7 +4,8 @@ const Restaurant = require("../models/Restaurant")
 const sendResponse = require("../utils/response")
 const AppError = require("../utils/AppError")
 
-
+// GET menu items for a specific restaurant
+// example: /api/restaurants/:restaurantId/menu
 const getMenu = async (req, res, next) => {
     try {
         const { restaurantId } = req.params 
