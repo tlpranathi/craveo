@@ -39,12 +39,22 @@ export default function Orders() {
         prev.map((o) => (o._id === orderId ? { ...o, status: "cancelled" } : o))
       )
     } catch (err) {
-      setError(err.response?.data?.message || "Could not cancel order.")
+      setError(err.response?.data?.message || "Could not cancel order.") 
+      setTimeout(() => {
+        setError("")
+      }, 3000)
     }
   }
 
   if (loading) return <p style={{ padding: "20px" }}>Loading orders...</p>
-  if (error) return <p style={{ padding: "20px", color: "red" }}>{error}</p>
+  if (error) 
+    return <div style={{ padding: "20px" }}>
+    <h2>My Orders</h2>
+    {error && (<p style={{color: "red"}}>
+      {error}
+    </p>
+  )}
+  </div>
 
   return (
     <div style={{ padding: "20px" }}>

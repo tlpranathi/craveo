@@ -12,7 +12,7 @@ API.interceptors.request.use((config) => {
   // get JWT token from localStorage
   const token = localStorage.getItem("craveo_token")
   if (token) {
-    confiig.headers.Authorization = `Bearer ${token}`
+    config.headers.Authorization = `Bearer ${token}`
   }
   // return modified request config
   return config
