@@ -9,6 +9,7 @@ const restaurantRoutes = require("./routes/restaurantRoutes")
 const menuRoutes = require("./routes/menuRoutes")
 const errorHandler = require("./middleware/errorHandler")
 const orderRoutes = require("./routes/orderRoutes")
+const userRoutes = require("./routes/userRoutes")
 
 
 const app = express()
@@ -22,6 +23,7 @@ app.use("/api/auth", authRoutes)
 app.use("/api/restaurants", restaurantRoutes)
 app.use("/api/menu", menuRoutes)
 app.use("/api/orders", orderRoutes)
+app.use("/api/users", userRoutes)
 app.use(errorHandler)
 
 

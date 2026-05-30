@@ -1,11 +1,9 @@
-// server/routes/orderRoutes.js
-
 const express = require("express")
 const router = express.Router()
 const protect = require("../middleware/protect")
 const { placeOrder, getMyOrders, updateOrderStatus } = require("../controllers/orderController")
 
-// All order routes require login
+// all order routes require login
 router.use(protect)
 
 router.post("/", placeOrder)                      // POST /api/orders
