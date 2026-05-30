@@ -1,5 +1,3 @@
-// client/src/App.jsx
-
 import { Routes, Route } from "react-router-dom"
 import { AuthProvider } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
@@ -13,6 +11,7 @@ import Register from "./pages/Register"
 import Restaurants from "./pages/Restaurants"
 import Menu from "./pages/Menu"
 import Orders from "./pages/Orders"
+import Profile from "./pages/Profile"
 
 function App() {
   return (
@@ -27,6 +26,7 @@ function App() {
           <Route path="/menu/:id" element={<Menu />} />
           <Route path="/cart" element={<ProtectedRoute> <Cart /> </ProtectedRoute>}/>
           <Route path="/orders" element = {<ProtectedRoute><Orders /></ProtectedRoute>}/>
+          <Route path="/profile" element = {<ProtectedRoute><Profile /></ProtectedRoute>}/>
         </Routes>
       </CartProvider>
     </AuthProvider>

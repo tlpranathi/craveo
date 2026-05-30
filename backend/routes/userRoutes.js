@@ -7,6 +7,6 @@ router.use(protect)
 
 router.get("/profile", getProfile)                      
 router.put("/profile", updateProfile)             
-router.put("/change-password", changePassword)   
+router.put("/profile/change-password", changePassword)   
 
 module.exports = router

@@ -27,6 +27,7 @@ export default function Navbar() {
           <span>Hi, {user.name}</span>
           <button onClick={handleLogout}>Logout</button>
           <Link to="/orders">Orders</Link>
+          <Link to="/profile">Profile</Link>
         </>
       ) : (
         <>
@@ -34,7 +35,6 @@ export default function Navbar() {
         <Link to="/register">Register</Link>
         </>
       )}
-
     </nav>
   )
 }
