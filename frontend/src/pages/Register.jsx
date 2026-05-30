@@ -1,5 +1,3 @@
-// client/src/pages/Register.jsx
-
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import API from "../services/api"
@@ -11,7 +9,6 @@ const Register = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
   const { login } = useAuth()
   const navigate = useNavigate()
 
@@ -19,14 +16,10 @@ const Register = () => {
     e.preventDefault()
     setError("")
     setLoading(true)
-
     try {
       const res = await API.post("/auth/signup", { name, email, password })
       const { token, user } = res.data.data
-
-      // Log user in immediately after signup
       login(user, token)
-
       navigate("/")
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Try again.")
@@ -38,36 +31,15 @@ const Register = () => {
   return (
     <div>
       <h2>Register</h2>
-
       {error && <p style={{ color: "red" }}>{error}</p>}
-
       <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Enter name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Enter email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Enter password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="text" placeholder="Enter name" value={name} onChange={(e) => setName(e.target.value)} required/>
+        <input type="email" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
+        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required/>
         <button type="submit" disabled={loading}>
           {loading ? "Creating account..." : "Sign Up"}
         </button>
       </form>
-
       <p>Already have an account? <Link to="/login">Login</Link></p>
     </div>
   )

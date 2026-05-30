@@ -1,5 +1,3 @@
-// client/src/pages/Cart.jsx
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "../context/CartContext"
@@ -16,17 +14,19 @@ export default function Cart() {
     setLoading(true)
 
     try {
-      // All items must be from same restaurant — get restaurantId from first item
+      if (cartItems.length === 0) throw new AppError("cart is empty")
+
+      // all items must be from same restaurant — get restaurantId from first item
       const restaurantId = cartItems[0].restaurantId
 
       if (!restaurantId) {
         throw new Error("Restaurant info missing. Please re-add items.")
       }
 
-      await API.post("/orders", {
-        restaurantId,
-        items: cartItems,
-      })
+
+      if(cartItems.length === 0) return 
+
+      await API.post("/orders", { restaurantId, items: cartItems, })
 
       clearCart()
       navigate("/orders")
@@ -64,12 +64,10 @@ export default function Cart() {
           </div>
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <button onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
+            <button disabled={loading} onClick={() => updateQuantity(item._id, item.quantity - 1)}>−</button>
             <span>{item.quantity}</span>
-            <button onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
-            <button onClick={() => removeFromCart(item._id)} style={{ color: "red" }}>
-              Remove
-            </button>
+            <button disabled={loading} onClick={() => updateQuantity(item._id, item.quantity + 1)}>+</button>
+            <button disabled={loading} onClick={() => removeFromCart(item._id)} style={{ color: "red" }}>🗑</button>
           </div>
         </div>
       ))}

@@ -1,36 +1,40 @@
-// client/src/pages/Restaurants.jsx
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../services/api"
 
-// Hardcoded cuisine options — add more as your DB grows
+// predefined cuisine filter options
 const CUISINES = ["All", "Indian", "Chinese", "Italian", "Mexican", "Fast Food"]
 
 const Restaurants = () => {
+  // stores fetched restaurants
   const [restaurants, setRestaurants] = useState([])
+  // loading state during API requests
   const [loading, setLoading] = useState(true)
+  // stores error message
   const [error, setError] = useState("")
 
-  // ── Search + filter state ─────────────────────────────────────────────────
+  // search text entered by user
   const [search, setSearch] = useState("")
+  // selected cuisine filter
   const [cuisine, setCuisine] = useState("")
 
+  // navigation hook
   const navigate = useNavigate()
 
-  // ── Fetch whenever search or cuisine changes ──────────────────────────────
+  // fetch restaurants whenever search or cuisine changes
   useEffect(() => {
     const fetchRestaurants = async () => {
       setLoading(true)
       setError("")
       try {
-        // Build query string dynamically
+        // build query parameters dynamically 
         const params = {}
         if (search) params.search = search
         if (cuisine && cuisine !== "All") params.cuisine = cuisine
-
+        
+        // send backend req
         const res = await API.get("/restaurants", { params })
-        setRestaurants(res.data.data)
+        setRestaurants(res.data.data) // save restaurant data
       } catch (err) {
         setError("Failed to load restaurants. Please try again.")
       } finally {
@@ -38,31 +42,22 @@ const Restaurants = () => {
       }
     }
 
-    // ── Debounce search input — wait 400ms after user stops typing ──────────
-    // Prevents an API call on every single keystroke
+    // debounce search input
+    // wait 400ms before fetching
     const debounce = setTimeout(fetchRestaurants, 400)
-    return () => clearTimeout(debounce)
-  }, [search, cuisine]) // re-runs when either changes
+    return () => clearTimeout(debounce) // cleanup old timer
+  }, [search, cuisine]) // re runs when either changes
 
   return (
     <div style={{ padding: "20px" }}>
       <h2>Restaurants</h2>
-
-      {/* ── Search + Filter controls ───────────────────────────────────── */}
       <div style={{ display: "flex", gap: "12px", marginBottom: "20px", flexWrap: "wrap" }}>
         <input
-          type="text"
-          placeholder="Search by name or location..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ padding: "8px 12px", flex: 1, minWidth: "200px" }}
-        />
+          type="text" placeholder="Search by name or location..." value={search} onChange={(e) => setSearch(e.target.value)}
+          style={{ padding: "8px 12px", flex: 1, minWidth: "200px" }}/>
 
-        <select
-          value={cuisine}
-          onChange={(e) => setCuisine(e.target.value)}
-          style={{ padding: "8px 12px" }}
-        >
+        <select value={cuisine} onChange={(e) => setCuisine(e.target.value)}
+          style={{ padding: "8px 12px" }} >
           {CUISINES.map((c) => (
             <option key={c} value={c === "All" ? "" : c}>
               {c}
@@ -70,17 +65,14 @@ const Restaurants = () => {
           ))}
         </select>
 
-        {/* Clear button — only shows when a filter is active */}
         {(search || cuisine) && (
           <button
-            onClick={() => { setSearch(""); setCuisine("") }}
-          >
+            onClick={() => { setSearch(""); setCuisine("") }}>
             Clear
           </button>
         )}
       </div>
 
-      {/* ── Results ────────────────────────────────────────────────────── */}
       {loading && <p>Loading restaurants...</p>}
       {error && <p style={{ color: "red" }}>{error}</p>}
 
@@ -91,8 +83,7 @@ const Restaurants = () => {
       {!loading && restaurants.map((r) => (
         <div
           key={r._id}
-          style={{ border: "1px solid #ccc", margin: "10px 0", padding: "15px", borderRadius: "8px" }}
-        >
+          style={{ border: "1px solid #ccc", margin: "10px 0", padding: "15px", borderRadius: "8px" }}>
           <h3 style={{ margin: "0 0 6px" }}>{r.name}</h3>
 
           <div style={{ fontSize: "14px", color: "#666", marginBottom: "10px" }}>

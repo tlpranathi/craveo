@@ -1,36 +1,53 @@
-// client/src/pages/Login.jsx
-
 import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import API from "../services/api"
 import { useAuth } from "../context/AuthContext"
 
 const Login = () => {
+  // form input states
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")      // show errors to user
-  const [loading, setLoading] = useState(false) // prevent double-submit
 
+  // stores error message shown to users
+  const [error, setError] = useState("")
+
+  // tracks login request status
+  const [loading, setLoading] = useState(false)
+  
+  // AuthContext login function
   const { login } = useAuth()
+
+  // React Router navigation hook
   const navigate = useNavigate()
 
-  const handleLogin = async (e) => {
+  // handle login form submission
+  const handleLogin = async(e) => {
+    // prevent browser refresh
     e.preventDefault()
-    setError("")        // clear previous error
+    
+    // clear old errors
+    setError("")
+    
+    // start loading states
     setLoading(true)
-
     try {
-      const res = await API.post("/auth/login", { email, password })
+      // send login request to backend
+      const res = await API.post("/auth/login", {email, password})
+      
+      // extract token and user data
       const { token, user } = res.data.data
 
-      // Save to context + localStorage
+      // save login to AuthContext
+      // also persists to localStorage
       login(user, token)
 
-      // Redirect to home after login
+      // redirects to home page
       navigate("/")
-    } catch (err) {
+    } catch (error) {
+      // show backend error message if available
       setError(err.response?.data?.message || "Login failed. Try again.")
     } finally {
+      // stop loading states
       setLoading(false)
     }
   }
@@ -38,31 +55,22 @@ const Login = () => {
   return (
     <div>
       <h2>Login</h2>
-
-      {/* Show error message to user */}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {/* display error message */}
+      {error && <p style={{color: "red"}}>{error}</p>}
 
       <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Enter email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Enter password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <input type="email" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required>
+        </input>
+
+        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required>
+        </input>
+
         <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
+          {loading? "Logging in..." : "Login"}
         </button>
       </form>
 
-      <p>Don't have an account? <Link to="/register">Register</Link></p>
+      <p>Don't have an account?<Link to="/register">Register</Link></p>
     </div>
   )
 }
