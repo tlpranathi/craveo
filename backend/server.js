@@ -2,6 +2,7 @@ require("dotenv").config() // loads variables from .env to process.env
 
 const express = require("express")
 const cors = require("cors") // cross-origin resoure sharing - allows frontend and backend on different ports/domains to communicate
+const helmet = require("helmet")
 
 const connectDB = require("./config/db")
 const authRoutes = require("./routes/authRoutes")
@@ -16,8 +17,9 @@ const app = express()
 
 connectDB()
 
-app.use(cors())
+app.use(helmet())
 app.use(express.json())
+app.use(cors())
 
 app.use("/api/auth", authRoutes)
 app.use("/api/restaurants", restaurantRoutes)
