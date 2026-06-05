@@ -15,11 +15,6 @@ const signup = async (req, res, next) => {
     try {
             const {name, email, password} = req.body
             
-            // manual input validation (before hitting the DB)
-            if (!name || !email || !password) {
-                throw new AppError("Name, email, and password are required", 400)
-            }
-
             // check for duplicate email
             const existingUser = await User.findOne({ email: email.toLowerCase() })
             if (existingUser) {
@@ -44,11 +39,6 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
     try {
         const {email, password} = req.body
-
-        // input validation
-        if (!email || !password) {
-            throw new AppError("Email and password are required", 400)
-        }
 
         // find email by user
         const user = await User.findOne({ email: email.toLowerCase() })

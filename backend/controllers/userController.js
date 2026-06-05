@@ -44,7 +44,6 @@ const updateProfile = async(req, res, next) => {
 const changePassword = async(req, res, next) => {
     try {
         const { currentPassword, newPassword } = req.body
-        if (!currentPassword || !newPassword) throw new AppError("Both current and new passwords are required", 400)
     // mongodb query
     const user = await User.findById(req.user._id)
     

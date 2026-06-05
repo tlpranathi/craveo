@@ -8,15 +8,6 @@ const placeOrder = async (req, res, next) => {
     try {
         const { restaurantId, items } = req.body // extract restaurantId and cart items from request body
 
-        // validate restaurantId
-        if (!restaurantId) {
-          throw new AppError("Restaurant ID is required", 400)
-        }
-        // validate items array
-        if (!items || !Array.isArray(items) || items.length === 0) {
-          throw new AppError("Order must contain atleast one item", 400)
-        }
-
         // calculate total order price
         const totalPrice = items.reduce(
           (sum, item) => sum + item.price * item.quantity, 0
@@ -64,14 +55,6 @@ const updateOrderStatus = async (req, res, next) => {
     try {
         // extract new status from request body
         const { status } = req.body
-        
-        // allowed order statuses
-        const validStatuses = ["pending", "confirmed", "preparing", "delivered", "cancelled"]
-        
-        // validate status value
-        if(!validStatuses.includes(status)) {
-          throw new AppError("Invalid status value", 400)
-        }
 
         // find order by ID
         const order = await Order.findById(req.params.id)

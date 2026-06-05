@@ -20,15 +20,25 @@ export const CartProvider = ({children}) => {
   // add item to cart
   // if item already exists -> increase quantity
   const addToCart = (item) => {
-    const existing = cartItems.find((i) => i._id === item._id)
+   // check restaurant restriction
+   if (cartItems.length > 0 && cartItems[0].restaurantId !== item.restaurantId) {
+    alert("You can only order from 1 restaurant at once")
+    return
+   }
 
-    if (existing) {
-      const updated = cartItems.map((i) => 
-      i._id === item._id ? {...i, quantity: i.quantity + 1} : i)
-      syncToStorage(updated)
-    } else {
-      syncToStorage([...cartItems, {...item, quantity: 1}])
-    }
+   // check if item already exists
+   const existing = cartItems.find((i) => i._id === item._id)
+
+   if (existing) {
+    const updated = cartItems.map((i) => 
+      i._id === item._id ? {...i, quantity: i.quantity + 1} : i
+    )
+    syncToStorage(updated)
+    return
+
+   }
+   // adding a new item
+   syncToStorage([...cartItems, {...item, quantity: 1}])
   }
 
   // remove item completely from cart
