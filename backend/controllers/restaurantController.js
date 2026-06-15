@@ -42,4 +42,38 @@ const getRestaurants = async(req, res, next) => {
     }
 }
 
-module.exports = { getRestaurants }
+const createRestaurant = async(req, res, next) => {
+  try {
+    const restaurant  = await Restaurant.create(req.body)
+    return sendResponse(res, 201, true, "Restaurant created successfully", restaurant)
+  } catch (error) {
+    next(error)
+  }
+}
+
+const updateRestaurant = async(req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findByIdAndUpdate(req.params.id, req.body, { // restaurant id from url and fields to update
+      new: true, // return updated document instead of old one
+      runValidators: true // apply schema validations during update
+    })
+    if (!restaurant) {
+    throw new AppError("Restaurant not found", 404)
+    }
+   return sendResponse(res, 200, true, "Restaurant updated successfully", restaurant)
+  } catch (error) {
+  next(error)
+  }
+}
+
+const deleteRestaurant = async(req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findByIdAndDelete(req.params.id)
+    if (!restaurant) throw new AppError("Restaurant not found", 404)
+    return sendResponse(res, 200, true, "Restaurant deleted successfully", restaurant)
+  } catch (error) {
+  next(error) 
+  }
+}
+
+module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant }
