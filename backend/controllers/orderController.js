@@ -36,13 +36,25 @@ const placeOrder = async (req, res, next) => {
 // get logged-in user orders
 const getMyOrders = async(req, res, next) => {
     try {
+        // pagination query params
+        const { page = 1, limit = 10 } = req.query
+        // valid positive numbers
+        const pageNumber = Math.max(1, Number(page))
+        const limitNumber = Math.max(1, Number(limit))
+        // number of documents to skip
+        const skip = (pageNumber-1)*limitNumber
+        // count total orders belonging to logged-in user
+        const totalOrders = await Order.countDocuments({user: req.user._id})
+        // calculate total pages
+        const totalPages = Math.ceil(totalOrders / limitNumber)
+
         // fetch orders belonging to user
         const orders = await Order.find({ user: req.user._id })
           // replace restaurantId with name and only fetch restaurant name field
           .populate("restaurant", "name")
           // sort newest orders first
           .sort({ createdAt: -1 })
-        return sendResponse(res, 200, true, "Orders fetched successfully", { orders })
+        return sendResponse(res, 200, true, "Orders fetched successfully", { orders, page: pageNumber, limit: limitNumber, totalOrders, totalPages})
     } catch (error) {
       next(error)
     }

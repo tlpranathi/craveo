@@ -23,8 +23,49 @@ const getMenu = async (req, res, next) => {
     }
  }
 
-const addItemsMenu = async ()
-const deleteItemsMenu = async ()
+const createMenuItem = async (req, res, next) => {
+    try {
+         // check restaurant exists
+        const restaurant = await Restaurant.findById(req.body.restaurantId)
+        if (!restaurant) {
+            throw new AppError("Restaurant not found", 404)
+        }
+        const menuItem = await Menu.create(req.body)
+        return sendResponse(res, 201, true, "Menu item created successfully", menuItem)
+    } catch (error) {
+        next(error)
+    }
+}
 
+const updateMenuItem = async (req, res, next) => {
+    try {
+        const menuItem = await Menu.findByIdAndUpdate(req.params.id, req.body, {
+                new: true,
+                runValidators: true
+            }
+        )
+        if (!menuItem) {
+            throw new AppError("Menu item not found", 404)
+        }
 
-module.exports = { getMenu }
+        return sendResponse(res, 200, true, "Menu item updated successfully", menuItem)
+    } catch (error) {
+        next(error)
+    }
+}
+
+const deleteMenuItem = async (req, res, next) => {
+    try {
+        const menuItem = await Menu.findByIdAndDelete(req.params.id)
+        if (!menuItem) {
+            throw new AppError("Menu item not found", 404)
+        }
+
+        return sendResponse(res, 200, true, "Menu item deleted successfully", menuItem)
+    } catch (error) {
+        next(error)
+    }
+}
+
+module.exports = { getMenu, createMenuItem, updateMenuItem, deleteMenuItem }
+
