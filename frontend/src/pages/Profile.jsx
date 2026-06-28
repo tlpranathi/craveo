@@ -1,102 +1,193 @@
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { useAuth } from "../context/AuthContext"
 import API from "../services/api"
 
-const Profile = () => {
-    const [profile, setProfile] = useState(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState("")
-    const [name, setName] = useState("")
-    const [email, setEmail] = useState("")
-    const [success, setSuccess] = useState("")
-    const [currentPassword, setCurrentPassword] = useState("")
-    const [newPassword, setNewPassword] = useState("")
+export default function Profile() {
+  const { user, login, token } = useAuth()
 
-    useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const res = await API.get("/users/profile")
-                setProfile(res.data.data)
-                setName(res.data.data.name)
-                setEmail(res.data.data.email)
-            } catch (err) {
-                setError("Failed to load profile")
-            } finally {
-                setLoading(false)
-            }
-        }
-        fetchProfile()
-    }, [])
+  // edit profile state
+  const [name, setName] = useState(user?.name || "")
+  const [email, setEmail] = useState(user?.email || "")
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileMsg, setProfileMsg] = useState("")
+  const [profileError, setProfileError] = useState("")
 
-    const handleUpdateProfile = async (e) => {
-        e.preventDefault()
-        setError("")
-        setSuccess("")
-        try {
-            const res = await API.put("/users/profile", {
-                name, email
-            })
-        setProfile(res.data.data)
-        setName("")
-        setEmail("")
-        setSuccess("Profile updated successfully")
-        setTimeout(() => {
-            setSuccess("")
-        }, 3000)
-        } catch (err) {
-            setError(err.response?.data?.message || "Update failed")
-        }
+  // change password state
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordMsg, setPasswordMsg] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault()
+    setProfileError("")
+    setProfileMsg("")
+    setProfileLoading(true)
+    try {
+      const res = await API.put("/users/profile", { name, email })
+      login(res.data.data, token) // refresh context with updated user
+      setProfileMsg("Profile updated successfully")
+    } catch (err) {
+      setProfileError(err.response?.data?.message || "Failed to update profile")
+    } finally {
+      setProfileLoading(false)
     }
+  }
 
-    const handleChangePassword = async(e) => {
-        e.preventDefault()
-        setError("")
-        setSuccess("")
-        try {
-            await API.put("/users/profile/change-password", {
-                currentPassword, 
-                newPassword,
-            })
-            setCurrentPassword("")
-            setNewPassword("")
-
-            setSuccess("Password updated successfully")
-        } catch (err) {
-            setError(err.response?.data?.message || "Password update failed")
-            setTimeout(() => {
-                setError("")
-            }, 3000)
-        }
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    setPasswordError("")
+    setPasswordMsg("")
+    setPasswordLoading(true)
+    try {
+      await API.put("/users/change-password", { currentPassword, newPassword })
+      setPasswordMsg("Password changed successfully")
+      setCurrentPassword("")
+      setNewPassword("")
+    } catch (err) {
+      setPasswordError(err.response?.data?.message || "Failed to change password")
+    } finally {
+      setPasswordLoading(false)
     }
+  }
 
-    if (loading) return <p>Loading profile...</p>
-    
-    return (
-        <div>
-            {error && (<p style={{ color: "red" }}>{error}</p>)}
-            {success && (<p style={{ color: "green" }}>{success}</p>)}
-        <div style={{ border: "1px solid #252121", margin: "15px", padding: "10px", borderRadius: "10px"}}>
-        <h1>My Profile</h1>
-        <p><strong>Name: </strong>{profile.name}</p>
-        <p><strong>Email: </strong>{profile.email}</p>
-        <p><strong>Role: </strong>{profile.role}</p>
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-10">
+      <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
+
+      {/*// client/src/pages/Profile.jsx — header card with scalloped edge instead of blobs
+
+// Replace just the profile summary card section with this:*/}
+
+      {/* ── Profile summary card — scalloped bottom edge ───────────────── */}
+      <div className="mb-6">
+        <div className="bg-craveo-600 rounded-t-2xl p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
+              {user?.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">{user?.name}</h2>
+              <p className="text-craveo-100 text-sm">{user?.email}</p>
+              {user?.role === "admin" && (
+                <span className="inline-block mt-1 bg-white/20 text-white text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  Admin
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        <div style={{ border: "1px solid #252121", margin: "15px", padding: "10px", borderRadius: "10px"}}>
-        <h3>Edit Profile</h3>
-        <form onSubmit={handleUpdateProfile}>
-            <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)}/><br></br><br></br>
-            <input disabled type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)}/><br></br><br></br>
-            <button type="submit">Save Changes</button>
+        {/* Scalloped edge cut from the bottom of the orange card */}
+        <svg className="w-full h-3 -mt-px" viewBox="0 0 200 10" preserveAspectRatio="none">
+          <path d="M0,0 L0,5 Q5,10 10,5 Q15,0 20,5 Q25,10 30,5 Q35,0 40,5 Q45,10 50,5 Q55,0 60,5 Q65,10 70,5 Q75,0 80,5 Q85,10 90,5 Q95,0 100,5 Q105,10 110,5 Q115,0 120,5 Q125,10 130,5 Q135,0 140,5 Q145,10 150,5 Q155,0 160,5 Q165,10 170,5 Q175,0 180,5 Q185,10 190,5 Q195,0 200,5 L200,0 Z" fill="#ea580c" />
+        </svg>
+      </div>
+
+      {/* ── Edit profile ───────────────────────────────────────────────── */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Edit profile</h3>
+
+        {profileError && (
+          <div className="border-l-4 border-red-400 bg-red-50 text-red-700 text-sm px-4 py-2.5 mb-4">
+            {profileError}
+          </div>
+        )}
+        {profileMsg && (
+          <div className="border-l-4 border-green-400 bg-green-50 text-green-700 text-sm px-4 py-2.5 mb-4">
+            {profileMsg}
+          </div>
+        )}
+
+        <form onSubmit={handleProfileUpdate} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+              Name
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 focus:border-craveo-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 focus:border-craveo-400"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={profileLoading}
+            className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+          >
+            {profileLoading ? "Saving..." : "Save changes"}
+          </button>
         </form>
-        </div>
-        <div style={{ border: "1px solid #252121", margin: "15px", padding: "10px", borderRadius: "10px"}}>
-            <h3>Change Password</h3>
-            <form onSubmit={handleChangePassword}>
-            <input type="password" placeholder="Current Password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} /><br></br><br></br>
-            <input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /><br></br><br></br>
-            <button type="submit">Change Password</button></form>
-        </div>
-        </div>
-    )
-}
+      </div>
 
-export default Profile
+      {/* ── Change password ───────────────────────────────────────────── */}
+      <div className="bg-white border border-gray-200 rounded-xl p-6">
+        <h3 className="font-semibold text-gray-900 mb-4">Change password</h3>
+
+        {passwordError && (
+          <div className="border-l-4 border-red-400 bg-red-50 text-red-700 text-sm px-4 py-2.5 mb-4">
+            {passwordError}
+          </div>
+        )}
+        {passwordMsg && (
+          <div className="border-l-4 border-green-400 bg-green-50 text-green-700 text-sm px-4 py-2.5 mb-4">
+            {passwordMsg}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordChange} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+              Current password
+            </label>
+            <input
+              type="password"
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 focus:border-craveo-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+              New password
+            </label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              minLength={6}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 focus:border-craveo-400"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={passwordLoading}
+            className="bg-gray-900 hover:bg-craveo-600 text-white px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+          >
+            {passwordLoading ? "Updating..." : "Change password"}
+          </button>
+        </form>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@theme {
+  --color-craveo-50: #fff7ed;
+  --color-craveo-100: #ffedd5;
+  --color-craveo-400: #fb923c;
+  --color-craveo-500: #f97316;
+  --color-craveo-600: #ea580c;
+  --color-craveo-700: #c2410c;
+}
+
+@keyframes scrollUp {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-scrollUp {
+  animation: scrollUp 20s linear infinite;
+}
+
+
+@keyframes scrollDown {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-scrollDown {
+  animation: scrollDown 20s linear infinite;
+}
+
+@keyframes scrollLeft {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scrollLeft {
+  animation: scrollLeft 20s linear infinite;
+}

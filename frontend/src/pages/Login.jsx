@@ -4,73 +4,96 @@ import API from "../services/api"
 import { useAuth } from "../context/AuthContext"
 
 const Login = () => {
-  // form input states
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-
-  // stores error message shown to users
   const [error, setError] = useState("")
-
-  // tracks login request status
   const [loading, setLoading] = useState(false)
-  
-  // AuthContext login function
-  const { login } = useAuth()
 
-  // React Router navigation hook
+  const { login } = useAuth()
   const navigate = useNavigate()
 
-  // handle login form submission
-  const handleLogin = async(e) => {
-    // prevent browser refresh
+  const handleLogin = async (e) => {
     e.preventDefault()
-    
-    // clear old errors
     setError("")
-    
-    // start loading states
     setLoading(true)
     try {
-      // send login request to backend
-      const res = await API.post("/auth/login", {email, password})
-      
-      // extract token and user data
+      const res = await API.post("/auth/login", { email, password })
       const { token, user } = res.data.data
-
-      // save login to AuthContext
-      // also persists to localStorage
       login(user, token)
-
-      // redirects to home page
       navigate("/")
-    } catch (error) {
-      // show backend error message if available
+    } catch (err) {
       setError(err.response?.data?.message || "Login failed. Try again.")
     } finally {
-      // stop loading states
       setLoading(false)
     }
   }
 
   return (
-    <div>
-      <h2>Login</h2>
-      {/* display error message */}
-      {error && <p style={{color: "red"}}>{error}</p>}
+    <div className="min-h-[calc(100vh-64px)] grid lg:grid-cols-2">
+      
+      <div className="hidden lg:flex flex-col justify-between bg-craveo-600 text-white p-12 relative overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700">
+        
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold tracking-tight">Craveo</h1>
+        </div>
 
-      <form onSubmit={handleLogin}>
-        <input type="email" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)} required>
-        </input>
+        <div className="relative z-10 max-w-sm">
+          <p className="text-3xl font-semibold leading-tight mb-4">
+            Every craving,<br />delivered.
+          </p>
+          <p className="text-craveo-100 text-sm">
+            Order from your favourite local restaurants in just a few taps.
+          </p>
+        </div>
 
-        <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)} required>
-        </input>
+        <div className="relative z-10 flex gap-6 text-sm text-craveo-100">
+          <span>150+ restaurants</span>
+          <span>·</span>
+          <span>15 locations</span>
+        </div>
+      </div>
 
-        <button type="submit" disabled={loading}>
-          {loading? "Logging in..." : "Login"}
-        </button>
-      </form>
+      {/* form panel */}
+      <div className="flex flex-col justify-center px-6 sm:px-12 lg:px-20 py-12 bg-white">
+        <div className="w-full max-w-sm mx-auto">
+          
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">Welcome back!</h2>
+          <p className="text-gray-500 text-sm mb-8">Log in to continue exploring Bengaluru's best restaurants.</p>
 
-      <p>Don't have an account?<Link to="/register">Register</Link></p>
+          {error && (
+            <div className="border-l-4 border-red-400 bg-red-50 text-red-700 text-sm px-4 py-3 mb-5">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="space-y-5">
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                Email
+              </label>
+              <input type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-0 py-2 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                Password
+              </label>
+              <input type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-0 py-2 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
+            </div>
+
+            <button type="submit" disabled={loading} className="w-full bg-gray-900 hover:bg-craveo-600 text-white py-3.5 rounded-full font-medium transition-colors disabled:opacity-50 mt-2">
+              {loading ? "Logging in..." : "Log in"}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 mt-8">
+            New to Craveo?{" "}
+            <Link to="/register" className="text-gray-900 font-semibold hover:text-craveo-600">
+              Create an account
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

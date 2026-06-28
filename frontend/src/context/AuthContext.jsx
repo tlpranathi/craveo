@@ -10,7 +10,13 @@ export const AuthProvider = ({ children }) => {
     // initialize from local storage so auth survives page refresh
     const[user, setUser] = useState(() => {
         const stored = localStorage.getItem("craveo_user")
-        return stored ? JSON.parse(stored) : null 
+        //return stored ? JSON.parse(stored) : null 
+        try {
+            return stored ? JSON.parse(stored) : null;
+            } catch (err) {
+            localStorage.removeItem("craveo_user");
+            return null;
+        }
     })
     // initialize JWT token from localStorage
     const [token, setToken] = useState(() => {      
