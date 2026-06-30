@@ -37,6 +37,11 @@ export default function Navbar() {
               <Link to="/orders" className="text-gray-700 hover:text-craveo-600 font-medium transition duration-200">
                 Orders
               </Link>
+              {user.role === "admin" && (
+                <Link to="/admin/restaurants" className="text-gray-700 hover:text-craveo-600 font-medium transition">
+                Admin
+                </Link>
+              )}
 
               {/* cart with badge */}
               <Link to="/cart" className="relative text-gray-700 hover:text-craveo-600 font-medium transition duration-200">

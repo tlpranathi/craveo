@@ -103,4 +103,18 @@ const updateOrderStatus = async (req, res, next) => {
     }
 }
 
-module.exports = { placeOrder, getMyOrders, updateOrderStatus }
+const getAllOrders = async (req, res, next) => {
+  try {
+    const orders = await Order.find()
+      .populate("user", "name email")
+      .populate("restaurant", "name")
+      .sort({ createdAt: -1 })
+
+    return sendResponse(res, 200, true, "All orders fetched", { orders })
+  } catch (error) {
+    next(error)
+  }
+}
+
+module.exports = { placeOrder, getMyOrders, updateOrderStatus, getAllOrders }
+

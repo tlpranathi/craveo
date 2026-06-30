@@ -12,6 +12,11 @@ import Restaurants from "./pages/Restaurants"
 import Menu from "./pages/Menu"
 import Orders from "./pages/Orders"
 import Profile from "./pages/Profile"
+import AdminRoute from "./components/AdminRoute"
+import AdminDashboard from "./pages/admin/AdminDashboard"
+import ManageRestaurants from "./pages/admin/ManageRestaurants"
+import ManageMenu from "./pages/admin/ManageMenu"
+import ManageOrders from "./pages/admin/ManageOrders"
 
 function App() {
   return (
@@ -27,6 +32,12 @@ function App() {
           <Route path="/cart" element={<ProtectedRoute> <Cart /> </ProtectedRoute>}/>
           <Route path="/orders" element = {<ProtectedRoute><Orders /></ProtectedRoute>}/>
           <Route path="/profile" element = {<ProtectedRoute><Profile /></ProtectedRoute>}/>
+          <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>}>
+            <Route path="restaurants" element={<ManageRestaurants />} />
+            <Route path="restaurants/:restaurantId/menu" element={<ManageMenu />} />
+            <Route path="orders" element={<ManageOrders />} />
+          </Route> 
+          <Route path="orders" element={<ManageOrders />} />
         </Routes>
       </CartProvider>
     </AuthProvider>
