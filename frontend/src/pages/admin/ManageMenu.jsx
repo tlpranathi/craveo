@@ -1,13 +1,13 @@
-// client/src/pages/admin/ManageMenu.jsx
-
 import { useState, useEffect } from "react"
-import { useParams, Link } from "react-router-dom"
+import { Link, useParams, useLocation } from "react-router-dom"
 import API from "../../services/api"
 
 const emptyForm = { name: "", price: "", description: "", image: "" }
 
 export default function ManageMenu() {
   const { restaurantId } = useParams()
+  const location = useLocation()
+  const restaurantName = location.state?.restaurantName
   const [menu, setMenu] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -90,7 +90,14 @@ export default function ManageMenu() {
       </Link>
 
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-lg font-semibold text-gray-900">Menu items</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {restaurantName || "Menu"}
+          </h2>
+          <p className="text-sm text-gray-500">
+            Manage menu items
+          </p>
+        </div>
         <button
           onClick={openCreate}
           className="bg-craveo-500 hover:bg-craveo-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition"
@@ -158,44 +165,15 @@ export default function ManageMenu() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input
-                type="text" placeholder="Item name" required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="number" placeholder="Price" required min="0"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <textarea
-                placeholder="Description" rows={2}
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="text" placeholder="Image URL"
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-
+              <input type="text" placeholder="Item name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="number" placeholder="Price" required min="0" value={form.price} step="0.01" onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <textarea placeholder="Description" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="text" placeholder="Image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition"
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
-                >
+                <button type="submit" disabled={saving} className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50">
                   {saving ? "Saving..." : "Save"}
                 </button>
               </div>

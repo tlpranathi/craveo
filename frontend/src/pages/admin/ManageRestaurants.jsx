@@ -1,10 +1,9 @@
-// client/src/pages/admin/ManageRestaurants.jsx
-
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import API from "../../services/api"
 
 const emptyForm = { name: "", location: "", cuisine: "", rating: "", image: "" }
+
 
 export default function ManageRestaurants() {
   const [restaurants, setRestaurants] = useState([])
@@ -86,7 +85,9 @@ export default function ManageRestaurants() {
   return (
     <div>
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-lg font-semibold text-gray-900">Restaurants</h2>
+      <h2 className="text-lg font-semibold text-gray-900">
+        Restaurants
+      </h2>
         <button
           onClick={openCreate}
           className="bg-craveo-500 hover:bg-craveo-600 text-white px-4 py-2 rounded-lg font-medium text-sm transition"
@@ -118,19 +119,13 @@ export default function ManageRestaurants() {
                   <td className="px-4 py-3 text-gray-600">{r.location}</td>
                   <td className="px-4 py-3 text-gray-600">⭐ {r.rating}</td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
-                    <Link
-                      to={`/admin/restaurants/${r._id}/menu`}
-                      className="text-craveo-600 hover:underline font-medium"
-                    >
-                      Menu
+                    <Link to={`/admin/restaurants/${r._id}/menu`} state={{ restaurantName: r.name }} className="text-craveo-600 hover:underline font-medium">
+                    Menu
                     </Link>
                     <button onClick={() => openEdit(r)} className="text-gray-600 hover:underline font-medium">
                       Edit
                     </button>
-                    <button
-                      onClick={() => handleDelete(r._id, r.name)}
-                      className="text-red-500 hover:underline font-medium"
-                    >
+                    <button onClick={() => handleDelete(r._id, r.name)} className="text-red-500 hover:underline font-medium">
                       Delete
                     </button>
                   </td>
@@ -148,7 +143,7 @@ export default function ManageRestaurants() {
         </div>
       )}
 
-      {/* ── Create/Edit modal ───────────────────────────────────────── */}
+      {/*create/edit modal*/}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
           <div className="bg-white rounded-xl p-6 w-full max-w-md">
@@ -163,50 +158,17 @@ export default function ManageRestaurants() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-3">
-              <input
-                type="text" placeholder="Name" required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="text" placeholder="Cuisine (e.g. Italian)"
-                value={form.cuisine}
-                onChange={(e) => setForm({ ...form, cuisine: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="text" placeholder="Location"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="number" step="0.1" min="0" max="5" placeholder="Rating (0-5)"
-                value={form.rating}
-                onChange={(e) => setForm({ ...form, rating: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-              <input
-                type="text" placeholder="Image URL"
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"
-              />
-
+              <input type="text" placeholder="Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="text" placeholder="Cuisine (e.g. Italian)" value={form.cuisine} onChange={(e) => setForm({ ...form, cuisine: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="text" placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="number" step="0.1" min="0" max="5" placeholder="Rating (0-5)" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+              <input type="text" placeholder="Image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition"
-                >
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition">
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
-                >
+                <button type="submit" disabled={saving} className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+>
                   {saving ? "Saving..." : "Save"}
                 </button>
               </div>

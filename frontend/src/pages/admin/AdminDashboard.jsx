@@ -2,7 +2,6 @@ import { useState, useEffect } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
 import API from "../../services/api"
 
-const totalOrders = await Order.countDocuments();
 export default function AdminDashboard() {
   const location = useLocation()
   const [stats, setStats] = useState({ restaurants: 0, orders: 0 })
@@ -14,7 +13,7 @@ export default function AdminDashboard() {
         const res2 = await API.get("/orders")
         // console.log("Restaurants response:", res.data);
         // console.log("Orders response:", res2.data);
-        setStats((s) => ({ ...s, restaurants: res.data.data.totalRestaurants, orders: res2.data.data.orders.length }))
+        setStats((s) => ({ ...s, restaurants: res.data.data.totalRestaurants, orders: res2.data.data.totalOrders }))
       } catch (err) {
         // fail silently — stats are non-critical
       }
@@ -44,11 +43,11 @@ export default function AdminDashboard() {
         </div>
          <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-gray-500 text-sm mb-1">Total Orders</p>
-          <p className="text-3xl font-bold text-craveo-600">{totalOrders}</p>
+          <p className="text-3xl font-bold text-craveo-600">{stats.orders}</p>
         </div>
       </div>
 
-      {/* Tab nav */}
+      {/* tab nav */}
       <div className="flex gap-2 border-b border-gray-200 mb-6">
         {navItems.map((item) => (
           <Link
@@ -63,10 +62,10 @@ export default function AdminDashboard() {
             {item.label}
           </Link>
         ))}
-        
+
       </div>
 
-      {/* Nested page renders here */}
+      {/* nested page renders here */}
       <Outlet />
     </div>
   )

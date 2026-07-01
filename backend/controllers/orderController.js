@@ -105,12 +105,13 @@ const updateOrderStatus = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
+    const totalOrders = await Order.countDocuments();
     const orders = await Order.find()
       .populate("user", "name email")
       .populate("restaurant", "name")
       .sort({ createdAt: -1 })
 
-    return sendResponse(res, 200, true, "All orders fetched", { orders })
+    return sendResponse(res, 200, true, "All orders fetched", { orders, totalOrders })
   } catch (error) {
     next(error)
   }

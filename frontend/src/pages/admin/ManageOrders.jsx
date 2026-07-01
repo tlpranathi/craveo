@@ -1,5 +1,3 @@
-// client/src/pages/admin/ManageOrders.jsx
-
 import { useState, useEffect } from "react"
 import API from "../../services/api"
 
@@ -22,7 +20,7 @@ export default function ManageOrders() {
   const fetchOrders = async () => {
     setLoading(true)
     try {
-      // Admin needs ALL orders, not just "my orders"
+      // admin needs ALL orders, not just "my orders"
       const res = await API.get("/orders")
       setOrders(res.data.data.orders)
     } catch (err) {
