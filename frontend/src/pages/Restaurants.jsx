@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../services/api"
+import { Search } from "lucide-react"
 
 const CUISINES = ["All", "Indian", "Chinese", "Italian", "Mexican", "Fast Food", "Japanese", "Street Food"]
 
@@ -37,7 +38,7 @@ const Restaurants = () => {
 
   return (
     <div>
-      {/* ── Brand hero header ───────────────────────────────────────── */}
+      {/* brand hero header */}
       <div className="bg-craveo-600 relative overflow-hidden">
         {/* <div className="absolute -top-10 -right-10 w-56 h-56 bg-craveo-500 rounded-full opacity-40" />
         <div className="absolute bottom-0 left-1/3 w-40 h-40 bg-craveo-700 rounded-full opacity-30" /> */}
@@ -50,19 +51,8 @@ const Restaurants = () => {
 
           {/* Search bar embedded in hero */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-            <input
-              type="text"
-              placeholder="Search by name or location..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"
-            />
-
-            <select
-              value={cuisine}
-              onChange={(e) => setCuisine(e.target.value)}
-              className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm"
-            >
+            <input type="text" placeholder="Search by name or location..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"/>
+            <select value={cuisine} onChange={(e) => setCuisine(e.target.value)} className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm">
               {CUISINES.map((c) => (
                 <option key={c} value={c === "All" ? "" : c}>
                   {c}
@@ -71,10 +61,7 @@ const Restaurants = () => {
             </select>
 
             {(search || cuisine) && (
-              <button
-                onClick={() => { setSearch(""); setCuisine("") }}
-                className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap"
-              >
+              <button onClick={() => { setSearch(""); setCuisine("") }} className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap">
                 Clear
               </button>
             )}
@@ -82,7 +69,7 @@ const Restaurants = () => {
         </div>
       </div>
 
-      {/* ── Results section ───────────────────────────────────────────── */}
+      {/* results section */}
       <div className="max-w-6xl mx-auto px-4 py-8">
 
         {!loading && !error && restaurants.length > 0 && (
@@ -91,7 +78,7 @@ const Restaurants = () => {
           </p>
         )}
 
-        {/* Loading skeleton */}
+        {/* loading skeleton */}
         {loading && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -114,37 +101,29 @@ const Restaurants = () => {
 
         {!loading && !error && restaurants.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-5xl mb-4">🔍</div>
+            <div className="text-5xl mb-4 items-center justify-center flex"><Search></Search></div>
             <p className="text-gray-700 text-lg font-medium mb-1">No restaurants found</p>
             <p className="text-gray-400 text-sm">Try a different search or cuisine filter</p>
           </div>
         )}
  
-        {/* Restaurant grid */}
+        {/* restaurant grid */}
         {!loading && !error && restaurants.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {restaurants.map((r) => (
               <div
                 key={r._id}
                 onClick={() => navigate(`/menu/${r._id}`)}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-craveo-200 transition-all duration-200 group"
-              >
-                {/* Image with orange overlay gradient on hover */}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden cursor-pointer hover:shadow-lg hover:-translate-y-1 hover:border-craveo-200 transition-all duration-200 group">
+                {/* image with orange overlay gradient on hover */}
                 <div className="h-40 bg-craveo-50 overflow-hidden relative">
                   {r.image ? (
-                    <img
-                      src={r.image}
-                      alt={r.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { e.target.style.display = "none" }}
-                    />
-                  ) : (
+                    <img src={r.image} alt={r.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onError={(e) => { e.target.style.display = "none" }}/>
+                    ) : (
                     <div className="w-full h-full flex items-center justify-center text-craveo-300 text-4xl">
                       🍽
                     </div>
                   )}
-
-                  {/* Rating badge floats on image now, top-right */}
                   {r.rating && (
                     <span className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 text-gray-900 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm">
                       ⭐ {r.rating}
@@ -152,7 +131,7 @@ const Restaurants = () => {
                   )}
                 </div>
 
-                {/* Content */}
+                {/* content */}
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 text-lg leading-tight mb-2 group-hover:text-craveo-600 transition-colors">
                     {r.name}
@@ -164,7 +143,9 @@ const Restaurants = () => {
                         {r.cuisine}
                       </span>
                     )}
-                    {r.location && <span className="text-gray-400">📍 {r.location}</span>}
+                    {r.location &&  <span className="bg-craveo-100 text-craveo-700 px-2.5 py-1 rounded-full text-xs font-semibold">
+                        {r.location}
+                      </span>}
                   </div>
 
                   <button className="w-full bg-craveo-500 group-hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition-colors">

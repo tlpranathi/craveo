@@ -19,7 +19,7 @@
 }
 
 .animate-scrollUp {
-  animation: scrollUp 20s linear infinite;
+  animation: scrollUp 50s linear infinite;
 }
 
 
@@ -47,4 +47,8 @@
 
 .animate-scrollLeft {
   animation: scrollLeft 20s linear infinite;
+}
+
+button {
+  cursor: pointer;
 }

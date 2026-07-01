@@ -1,9 +1,8 @@
-// client/src/pages/admin/AdminDashboard.jsx
-
 import { useState, useEffect } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
 import API from "../../services/api"
 
+const totalOrders = await Order.countDocuments();
 export default function AdminDashboard() {
   const location = useLocation()
   const [stats, setStats] = useState({ restaurants: 0, orders: 0 })
@@ -12,7 +11,10 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const res = await API.get("/restaurants")
-        setStats((s) => ({ ...s, restaurants: res.data.data.totalRestaurants || res.data.data.restaurants?.length || 0 }))
+        const res2 = await API.get("/orders")
+        // console.log("Restaurants response:", res.data);
+        // console.log("Orders response:", res2.data);
+        setStats((s) => ({ ...s, restaurants: res.data.data.totalRestaurants, orders: res2.data.data.orders.length }))
       } catch (err) {
         // fail silently — stats are non-critical
       }
@@ -30,17 +32,19 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <span className="bg-craveo-100 text-craveo-700 text-xs font-semibold px-3 py-1 rounded-full">
-          Admin access
-        </span>
+        <h1 className="text-4xl font-bold text-gray-900">Admin Dashboard</h1>
       </div>
 
-      {/* Stat cards */}
+      {/* stat cards */}
+      
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <p className="text-gray-500 text-sm mb-1">Total Restaurants</p>
           <p className="text-3xl font-bold text-craveo-600">{stats.restaurants}</p>
+        </div>
+         <div className="bg-white border border-gray-200 rounded-xl p-5">
+          <p className="text-gray-500 text-sm mb-1">Total Orders</p>
+          <p className="text-3xl font-bold text-craveo-600">{totalOrders}</p>
         </div>
       </div>
 
@@ -59,6 +63,7 @@ export default function AdminDashboard() {
             {item.label}
           </Link>
         ))}
+        
       </div>
 
       {/* Nested page renders here */}

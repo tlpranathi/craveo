@@ -1,110 +1,3 @@
-// import { useState, useEffect } from "react"
-// import { useNavigate } from "react-router-dom"
-// import API from "../services/api"
-
-// // Status badge color map
-// const statusColors = {
-//   pending: "#f59e0b",
-//   confirmed: "#3b82f6",
-//   preparing: "#8b5cf6",
-//   delivered: "#10b981",
-//   cancelled: "#ef4444",
-// }
-
-// export default function Orders() {
-//   const [orders, setOrders] = useState([])
-//   const [loading, setLoading] = useState(true)
-//   const [error, setError] = useState("")
-//   const navigate = useNavigate()
-
-//   useEffect(() => {
-//     const fetchOrders = async () => {
-//       try {
-//         const res = await API.get("/orders/my-orders")
-//         setOrders(res.data.data.orders)
-//       } catch (err) {
-//         setError("Failed to load orders.")
-//       } finally {
-//         setLoading(false)
-//       }
-//     }
-//     fetchOrders()
-//   }, [])
-
-//   const handleCancel = async (orderId) => {
-//     try {
-//       await API.patch(`/orders/${orderId}/status`, { status: "cancelled" })
-//       // update local state — no need to refetch
-//       setOrders((prev) =>
-//         prev.map((o) => (o._id === orderId ? { ...o, status: "cancelled" } : o))
-//       )
-//     } catch (err) {
-//       setError(err.response?.data?.message || "Could not cancel order.") 
-//       setTimeout(() => {
-//         setError("")
-//       }, 3000)
-//     }
-//   }
-
-//   if (loading) return <p style={{ padding: "20px" }}>Loading orders...</p>
-//   if (error) 
-//     return <div style={{ padding: "20px" }}>
-//     <h2>My Orders</h2>
-//     {error && (<p style={{color: "red"}}>
-//       {error}
-//     </p>
-//   )}
-//   </div>
-
-//   return (
-//     <div style={{ padding: "20px" }}>
-//       <h2>My Orders</h2>
-
-//       {orders.length === 0 ? (
-//         <div>
-//           <p>You haven't placed any orders yet.</p>
-//           <button onClick={() => navigate("/restaurants")}>Order Now</button>
-//         </div>
-//       ) : (
-//         orders.map((order) => {
-//         const canCancel = order.status === "pending" && Date.now() - new Date(order.createdAt).getTime() < 60*1000
-//           return (
-//           <div key={order._id} style={{ border: "1px solid #ccc", margin: "10px 0", padding: "15px", borderRadius: "8px" }}>
-//             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-//               <div>
-//                 <strong>{order.restaurant?.name || "Restaurant"}</strong>
-//                 <p style={{ margin: 0, fontSize: "12px", color: "#666" }}>
-//                   {new Date(order.createdAt).toLocaleString()}
-//                 </p>
-//               </div>
-//               <span style={{ background: statusColors[order.status], color: "white", padding: "4px 10px", borderRadius: "12px",
-//                   fontSize: "12px", fontWeight: "bold", textTransform: "capitalize",}} >
-//                 {order.status}
-//               </span>
-//             </div>
-//             {order.items.map((item, index) => (
-//               <p key={index} style={{ margin: "4px 0" }}>
-//                 {item.name} × {item.quantity} — ₹{item.price * item.quantity}
-//               </p>
-//             ))}
-//             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "10px", borderTop: "1px solid #eee", paddingTop: "8px" }}>
-//               <strong>Total: ₹{order.totalPrice}</strong>
-//               {canCancel && (
-//                 <button onClick={() => handleCancel(order._id)} style={{ color: "red", background: "none", border: "1px solid red", padding: "4px 10px", cursor: "pointer", borderRadius: "4px" }}>
-//                   Cancel Order
-//                 </button>
-//               )}
-//             </div>
-//           </div>
-//         )
-//       })
-//     )}
-//     </div>
-//   )
-// }
-
-// client/src/pages/Orders.jsx — key sections updated
-
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../services/api"
@@ -117,7 +10,7 @@ const statusStyles = {
   cancelled: "bg-red-100 text-red-700",
 }
 
-// Dotted progress trail — delivery-route coded, not a generic blob
+// dotted progress trail
 const STAGES = ["pending", "confirmed", "preparing", "delivered"]
 
 function StatusTrail({ status }) {
@@ -217,10 +110,7 @@ export default function Orders() {
             </div>
             <p className="text-gray-700 text-lg font-medium mb-1">No orders yet</p>
             <p className="text-gray-400 text-sm mb-6">Your order history will show up here</p>
-            <button
-              onClick={() => navigate("/restaurants")}
-              className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-3 rounded-full font-medium transition"
-            >
+            <button onClick={() => navigate("/restaurants")} className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-3 rounded-full font-medium transition">
               Order now
             </button>
           </div>
@@ -254,10 +144,7 @@ export default function Orders() {
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
                   <span className="font-bold text-craveo-600">₹{order.totalPrice}</span>
                   {order.status === "pending" && (
-                    <button
-                      onClick={() => handleCancel(order._id)}
-                      className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition"
-                    >
+                    <button onClick={() => handleCancel(order._id)} className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition">
                       Cancel order
                     </button>
                   )}

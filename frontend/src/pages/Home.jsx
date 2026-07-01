@@ -45,43 +45,37 @@ const Home = () => {
     <div className="relative min-h-screen bg-white">
       {/* hero section */}
       <div className="relative w-full overflow-hidden">
-        <div className="relative overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 px-6 py-28 sm:py-40 md:py-52 lg:py-60 min-h-[500px] sm:min-h-[600px] flex items-center justify-center">
-          {/* left */}
-          <div className="absolute left-8 top-1/2 -translate-y-1/2 z-10 hidden md:block">
-            <VerticalCarousel images={foodImages}/>
-          </div>
-
-          {/* right */}
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 z-10 hidden md:block">
-            <VerticalCarousel images={foodImages} reverse/>
-          </div>
+        <div className="relative overflow-hidden bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 py-28 sm:py-40 md:py-52 lg:py-60 min-h-[500px] sm:min-h-[600px] flex">
           
-          <h1 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[120px] sm:text-[200px] md:text-[250px] lg:text-[300px] font-black text-black opacity-5 pointer-events-none select-none z-0">
-          CRAVEO</h1>
-          <div className="max-w-6xl mx-auto relative z-10 text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4 leading-tight">
-              Discover Bengaluru,<br className="sm:hidden" /> one bite at a time.
-            </h1>
-            <p className="text-craveo-100 text-lg mb-8 max-w-xl mx-auto">
-            From crispy dosas to late-night shawarmas, discover Bengaluru's best food.
-            </p>
+          <div className="relative z-10 flex w-full h-full">
 
-            <button onClick={() => navigate("/restaurants")} className="bg-white text-craveo-600 px-8 py-3.5 rounded-full font-semibold hover:bg-craveo-50 transition shadow-sm">
-                Start Exploring
-            </button>
-            <div className="flex justify-center gap-8 mt-10 text-craveo-100 text-sm">
-              <button onClick={() => navigate("/restaurants?location=Koramangala")} className="flex items-center gap-1 text-white hover:text-orange-100 transition">
-                <MapPinCheckInside className="w-5 h-5" />Koramangala
-              </button> 
-              
-              <button onClick={() => navigate("/restaurants?location=Indiranagar")} className="flex items-center gap-1 text-white hover:text-orange-100 transition">
-                <MapPinCheckInside className="w-5 h-5" />Indiranagar
-                </button>
-              
-              <button onClick={() => navigate("/restaurants?location=Whitefield")} className="flex items-center gap-1 text-white hover:text-orange-100 transition">
-                <MapPinCheckInside className="w-5 h-5" />Whitefield
-                </button>
+            {/* left half — wide scrolling carousel */}
+            <div className="hidden md:flex w-1/2 h-full">
+              <VerticalCarousel images={foodImages} />
             </div>
+
+            {/* right half — all text, right-aligned */}
+            <div className="w-full md:w-1/2 px-10 lg:px-16 flex items-center justify-center">
+            <div className="relative max-w-xl flex flex-col items-center text-center">
+              <span className="absolute inset-0 flex items-center justify-center text-[10rem] lg:text-[11rem] tracking-[0.1em] font-black text-white/7 pointer-events-none">
+                CRAVEO
+              </span>
+              <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
+                Discover Bengaluru,
+              </h1>
+              <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
+                One bite at a time.
+              </h1>
+              <p className="mt-6 text-lg text-orange-100">
+                From crispy dosas to late-night shawarmas, discover Bengaluru's best food.
+              </p>
+              <button
+                onClick={() => navigate("/restaurants")}
+                className="mt-10 bg-white text-orange-600 px-8 py-3.5 rounded-full font-semibold hover:bg-orange-50 transition">
+                Start Exploring
+              </button>
+            </div>
+          </div>
           </div>
         </div>
         {/* mobile carousel */}

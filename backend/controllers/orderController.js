@@ -100,7 +100,7 @@ const updateOrderStatus = async (req, res, next) => {
         return sendResponse(res, 200, true, "Order status updated", { order })
     } catch (error) {
       next(error)
-    }
+    } 
 }
 
 const getAllOrders = async (req, res, next) => {

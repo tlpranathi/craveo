@@ -3,16 +3,17 @@ export default function VerticalCarousel({ images, reverse = false }) {
   const allImages = [...images, ...images]
 
   return (
-    <div className="overflow-hidden h-[650px] w-44">
+    <div className="h-[500px] w-full">
       <div
-        className={`flex flex-col gap-4 ${
+        className={`flex flex-col ${
           reverse ? "animate-scrollDown" : "animate-scrollUp"
         }`}
       >
         {allImages.map((img, index) => (
-          <img key={index} src={img} alt="" className="rounded-2xl shadow-lg object-cover h-40 w-full"/>
+          <img key={index} src={img} alt="" className="h-150 w-full object-cover shadow-lg flex-shrink-0"
+          />
         ))}
       </div>
-    </div>
+   </div>
   )
 }
