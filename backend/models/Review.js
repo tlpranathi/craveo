@@ -1,0 +1,39 @@
+const mongoose = require("mongoose")
+
+const ReviewSchema = new mongoose.Schema({
+     user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true
+        },
+     restaurant: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Restaurant",
+            required: true
+        }, 
+     order: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Order",
+            required: true,
+            unique: true // one review per order
+        },
+    rating: {
+        type: Number,
+        required: true,
+        min: 0,
+        max: 5,
+        validate: {
+            validator: (value) => value % 0.5 === 0,
+            message: "Rating must be in 0.5 increments."
+        }
+    },
+    comment: {
+        type: String,
+        maxlength: 500,
+        trim: true,
+        default: ""
+    }
+}, {timestamps: true})
+
+module.exports = mongoose.model("Review", ReviewSchema)
+

@@ -14,12 +14,18 @@ const RestaurantSchema = new mongoose.Schema({
       type: String, 
       trim: true
     },
-    rating: {
+    averageRating: {
       type: Number,
       min: 0,
-      max: 5      
+      max: 5,
+      default: 0      
     },
     image: String, 
+    numberOfReviews : {
+      type: Number,
+      default: 0,
+      min: 0
+    }
 }, {timestamps: true}) // automatically adds 2 fields - createdAt and updatedAt
 
 module.exports = mongoose.model("Restaurant", RestaurantSchema)
