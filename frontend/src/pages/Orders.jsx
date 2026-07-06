@@ -76,7 +76,7 @@ export default function Orders() {
   }
 
   const reviewOrder = (order) => {
-  navigate(`/menu/${order.restaurant._id}?review=true`)
+  navigate(`/menu/${order.restaurant._id}?review=true&orderId=${order._id}`)
 }
 
   return (

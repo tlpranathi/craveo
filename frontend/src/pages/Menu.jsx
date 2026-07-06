@@ -20,7 +20,7 @@ const Menu = () => {
 
   // check if redirected from Orders page with ?review=true
   const autoOpenReview = new URLSearchParams(location.search).get("review") === "true"
-
+  const reviewOrderId = new URLSearchParams(location.search).get("orderId") 
   // if redirected from Orders, auto-expand the review section
   useEffect(() => {
     if (autoOpenReview) setShowReviews(true)
@@ -187,6 +187,7 @@ const Menu = () => {
             <ReviewSection
               restaurantId={id}
               autoOpen={autoOpenReview}
+              reviewOrderId={reviewOrderId}
             />
           )}
         </div>

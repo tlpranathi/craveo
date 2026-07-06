@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext"
 import API from "../services/api"
 import StarRating from "./StarRating"
 
-export default function ReviewSection({ restaurantId, autoOpen = false }) {
+export default function ReviewSection({ restaurantId, autoOpen = false, reviewOrderId = null }) {
   const { user } = useAuth()
   const formRef = useRef(null)
 
@@ -12,6 +12,7 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
   const [loadingReviews, setLoadingReviews] = useState(true)
 
   const [eligibleOrder, setEligibleOrder] = useState(null)
+  const [targetOrder, setTargetOrder] = useState(null)
   const [alreadyReviewed, setAlreadyReviewed] = useState(false)
   const [checkingEligibility, setCheckingEligibility] = useState(true)
 
@@ -19,7 +20,6 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
   const [comment, setComment] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState("")
-  const [formSuccess, setFormSuccess] = useState("")
   const [highlighted, setHighlighted] = useState(false)
 
   const fetchReviews = async () => {
@@ -37,33 +37,39 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
   }
 
   const checkEligibility = async () => {
-    if (!user) { setCheckingEligibility(false); return }
+    if (!user || !reviewOrderId) {
+      setCheckingEligibility(false)
+      return
+    }
     try {
       const res = await API.get("/orders/my-orders")
       const orders = res.data.data.orders
 
-      // find ALL delivered orders for this restaurant
-      const deliveredOrders = orders.filter(
-        (o) => o.restaurant?._id === restaurantId && o.status === "delivered"
+      // find exactly the order from the URL
+      const orderToReview = orders.find(
+        (o) => o._id === reviewOrderId && o.status === "delivered"
       )
 
-      if (deliveredOrders.length === 0) {
+      if (!orderToReview) {
         setEligibleOrder(null)
         setCheckingEligibility(false)
         return
       }
 
-      // check which ones have already been reviewed
+      // check if this specific order is already reviewed
       const reviewRes = await API.get(`/reviews/${restaurantId}`)
-      const existingReviews = reviewRes.data.data.reviews
-
-      // find a delivered order that hasn't been reviewed yet
-      const unreviewed = deliveredOrders.find(
-        (o) => !existingReviews.some((r) => r.order === o._id || r.order?._id === o._id)
+      const alreadyDone = reviewRes.data.data.reviews.some(
+        (r) => r.order === reviewOrderId || r.order?._id === reviewOrderId
       )
 
-      setEligibleOrder(unreviewed || null)
-      setAlreadyReviewed(!unreviewed && deliveredOrders.length > 0)
+      if (alreadyDone) {
+        setAlreadyReviewed(true)
+        setEligibleOrder(orderToReview) // keep it so disabled state shows
+        setTargetOrder(orderToReview)
+      } else {
+        setEligibleOrder(orderToReview)
+        setTargetOrder(orderToReview)
+      }
     } catch (err) {
       // fail silently
     } finally {
@@ -71,27 +77,24 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
     }
   }
 
-  // auto-scroll + highlight if redirected from Orders page
   useEffect(() => {
     fetchReviews()
     checkEligibility()
-  }, [restaurantId])
+  }, [restaurantId, reviewOrderId])
 
   useEffect(() => {
-    if (autoOpen && formRef.current) {
+    if (autoOpen && formRef.current && !checkingEligibility) {
       setTimeout(() => {
-        formRef.current.scrollIntoView({ behavior: "smooth", block: "center" })
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
         setHighlighted(true)
-        setTimeout(() => setHighlighted(false), 2000) // remove highlight after 2s
-      }, 500) // small delay so page finishes rendering first
+        setTimeout(() => setHighlighted(false), 2000)
+      }, 500)
     }
   }, [autoOpen, checkingEligibility])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setFormError("")
-    setFormSuccess("")
-
     if (rating === 0) { setFormError("Please select a star rating."); return }
     if (comment.length > 500) { setFormError("Comment cannot exceed 500 characters."); return }
 
@@ -102,11 +105,7 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
         rating,
         comment,
       })
-      setFormSuccess("Review submitted!")
       setAlreadyReviewed(true)
-      setEligibleOrder(null)
-      setRating(0)
-      setComment("")
       fetchReviews()
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to submit review.")
@@ -118,67 +117,105 @@ export default function ReviewSection({ restaurantId, autoOpen = false }) {
   return (
     <div className="mt-8 border-t border-gray-200 pt-8">
 
-      {/* write a review */}
-      {user && !checkingEligibility && (
-        <div className="mb-8">
-          {!eligibleOrder && !alreadyReviewed && (
-            <p className="text-sm text-gray-400 italic mb-6">
-              Order and get it delivered to leave a review.
-            </p>
-          )}
+      {/* Write a review */}
+      {user && !checkingEligibility && eligibleOrder && (
+        <div
+          ref={formRef}
+          className={`bg-white border rounded-xl p-5 mb-6 transition-all duration-500 ${
+            highlighted
+              ? "border-craveo-400 ring-2 ring-craveo-300 shadow-md"
+              : alreadyReviewed
+              ? "border-green-200 bg-green-50"
+              : "border-gray-200"
+          }`}
+        >
+          <h3 className="font-semibold text-gray-900 mb-1">
+            {alreadyReviewed ? "Review submitted ✓" : "Write a review"}
+          </h3>
 
-          {alreadyReviewed && !eligibleOrder && (
-            <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-lg mb-6">
-              You've reviewed all your delivered orders for this restaurant.
+          {/* Order context */}
+          {targetOrder && (
+            <div className="bg-gray-50 rounded-lg px-4 py-3 mb-4 text-sm">
+              <p className="text-gray-500 mb-1">
+                Order from{" "}
+                <span className="font-medium text-gray-700">
+                  {new Date(targetOrder.createdAt).toLocaleDateString("en-IN", {
+                    day: "numeric", month: "short", year: "numeric",
+                  })}
+                </span>
+              </p>
+              <ul className="text-gray-600 space-y-0.5">
+                {targetOrder.items.map((item, i) => (
+                  <li key={i}>{item.name} × {item.quantity}</li>
+                ))}
+              </ul>
             </div>
           )}
 
-          {eligibleOrder && (
-            <div ref={formRef} className={`bg-white border rounded-xl p-5 mb-6 transition-all duration-500 ${ highlighted ? "border-craveo-400 ring-2 ring-craveo-300 shadow-md" : "border-gray-200" }`}>
-              <h3 className="font-semibold text-gray-900 mb-4">Write a review</h3>
+          {/* Success state */}
+          {alreadyReviewed ? (
+            <div className="flex items-center gap-2 text-green-700 text-sm font-medium py-2">
+              <span>✓</span>
+              <span>
+                Thanks for your review! Go back to{" "}
+                <button
+                  onClick={() => window.history.back()}
+                  className="underline"
+                >
+                  orders
+                </button>{" "}
+                to review other orders.
+              </span>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
               {formError && (
-                <div className="border-l-4 border-red-400 bg-red-50 text-red-700 text-sm px-4 py-2.5 mb-4">
+                <div className="border-l-4 border-red-400 bg-red-50 text-red-700 text-sm px-4 py-2.5">
                   {formError}
                 </div>
               )}
-              {formSuccess && (
-                <div className="border-l-4 border-green-400 bg-green-50 text-green-700 text-sm px-4 py-2.5 mb-4">
-                  {formSuccess}
-                </div>
-              )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Rating
-                  </label>
-                  <StarRating value={rating} onChange={setRating} mode="input" size="text-3xl"/>
-                  {rating > 0 && (
-                    <p className="text-sm text-craveo-600 mt-1 font-medium">{rating} / 5</p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
+                  Rating
+                </label>
+                <StarRating value={rating} onChange={setRating} mode="input" size="text-3xl" />
+                {rating > 0 && (
+                  <p className="text-sm text-craveo-600 mt-1 font-medium">{rating} / 5</p>
+                )}
+              </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                    Comment
-                    <span className="normal-case text-gray-400 ml-1">(optional)</span>
-                  </label>
-                  <textarea rows={3} placeholder="What did you think of the food?" value={comment} onChange={(e) => setComment(e.target.value)} maxLength={500} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 resize-none"/>
-                  {/* character counter */}
-                  <p className={`text-xs mt-1 text-right ${comment.length > 450 ? "text-red-500" : "text-gray-400"}`}> {comment.length}/500
-                  </p>
-                </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                  Comment
+                  <span className="normal-case text-gray-400 ml-1">(optional)</span>
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="What did you think of the food?"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  maxLength={500}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 resize-none"
+                />
+                <p className={`text-xs mt-1 text-right ${comment.length > 450 ? "text-red-500" : "text-gray-400"}`}>
+                  {comment.length}/500
+                </p>
+              </div>
 
-                <button type="submit" disabled={submitting} className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-50">
-                  {submitting ? "Submitting..." : "Submit review"}
-                </button>
-              </form>
-            </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+              >
+                {submitting ? "Submitting..." : "Submit review"}
+              </button>
+            </form>
           )}
         </div>
       )}
 
-      {/* reviews list */}
+      {/* Reviews list — public */}
       <h3 className="font-semibold text-gray-900 mb-4">
         {totalReviews > 0 ? `${totalReviews} review${totalReviews !== 1 ? "s" : ""}` : "No reviews yet"}
       </h3>
