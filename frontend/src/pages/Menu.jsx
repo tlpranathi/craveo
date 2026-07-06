@@ -160,12 +160,12 @@ const Menu = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <StarRating
-                value={Math.round((restaurantInfo.rating || 0) * 2) / 2}
+                value={Math.round((restaurantInfo.averageRating || 0) * 2) / 2}
                 mode="display"
                 size="text-xl"
               />
               <span className="text-gray-700 font-medium">
-                {restaurantInfo.rating > 0 ? restaurantInfo.rating : "No ratings yet"}
+                {restaurantInfo.averageRating > 0 ? restaurantInfo.averageRating : "No ratings yet"}
               </span>
               {restaurantInfo.numberOfReviews > 0 && (
                 <span className="text-gray-400 text-sm">

@@ -30,7 +30,12 @@ const createReview = async (req, res, next) => {
     const reviews = await Review.find({ restaurant: order.restaurant })
     const numberOfReviews = reviews.length
     const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) /numberOfReviews
-    await Restaurant.findByIdAndUpdate(order.restaurant, { rating: Number(averageRating.toFixed(1)), numberOfReviews })
+    
+    console.log("reviews found:", numberOfReviews)
+    console.log("ratings:", reviews.map(r => r.rating))
+    console.log("average:", averageRating)
+    
+    await Restaurant.findByIdAndUpdate(order.restaurant, { averageRating: Number(averageRating.toFixed(1)), numberOfReviews })
     return sendResponse(res, 201, true, "Review added successfully.", { review })
   } catch (error) {
     next(error)

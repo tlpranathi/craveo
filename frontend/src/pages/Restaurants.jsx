@@ -124,9 +124,9 @@ const Restaurants = () => {
                       🍽
                     </div>
                   )}
-                  {r.rating && (
+                  {r.averageRating && (
                     <span className="absolute top-3 right-3 flex items-center gap-1 bg-white/95 text-gray-900 text-sm font-semibold px-2.5 py-1 rounded-full shadow-sm">
-                      ⭐ {r.rating}
+                      ⭐ {r.averageRating}
                     </span>
                   )}
                 </div>

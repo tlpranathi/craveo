@@ -43,7 +43,6 @@ export default function ManageRestaurants() {
       name: r.name || "",
       location: r.location || "",
       cuisine: r.cuisine || "",
-      rating: r.rating ?? "",
       image: r.image || "",
     })
     setFormError("")
@@ -117,7 +116,7 @@ export default function ManageRestaurants() {
                   <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
                   <td className="px-4 py-3 text-gray-600">{r.cuisine}</td>
                   <td className="px-4 py-3 text-gray-600">{r.location}</td>
-                  <td className="px-4 py-3 text-gray-600">⭐ {r.rating}</td>
+                  <td className="px-4 py-3 text-gray-600">⭐ {r.averageRating}</td>
                   <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
                     <Link to={`/admin/restaurants/${r._id}/menu`} state={{ restaurantName: r.name }} className="text-craveo-600 hover:underline font-medium">
                     Menu
@@ -161,7 +160,6 @@ export default function ManageRestaurants() {
               <input type="text" placeholder="Name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <input type="text" placeholder="Cuisine (e.g. Italian)" value={form.cuisine} onChange={(e) => setForm({ ...form, cuisine: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <input type="text" placeholder="Location" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
-              <input type="number" step="0.1" min="0" max="5" placeholder="Rating (0-5)" value={form.rating} onChange={(e) => setForm({ ...form, rating: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <input type="text" placeholder="Image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition">
