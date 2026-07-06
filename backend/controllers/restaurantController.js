@@ -4,6 +4,16 @@ const sendResponse = require("../utils/response")
 // GET all restaurants with optional search + cuisine filters
 // example: /api/restaurants?search=bangalore&cuisine=indian
 
+const getRestaurantById = async (req, res, next) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id)
+    if (!restaurant) throw new AppError("Restaurant not found", 404)
+    return sendResponse(res, 200, true, "Restaurant fetched", restaurant)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const getRestaurants = async(req, res, next) => {
     try {
           const { search, cuisine, page = 1, limit = 10 } = req.query // extract query params from URL
@@ -80,4 +90,5 @@ const deleteRestaurant = async(req, res, next) => {
   }
 }
 
-module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant }
+module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById }
+

@@ -1,17 +1,32 @@
 import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
 import { useCart } from "../context/CartContext"
+import StarRating from "../components/StarRating"
+import ReviewSection from "../components/ReviewSection"
 
 const Menu = () => {
   const { id } = useParams()
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const [menu, setMenu] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [restaurantInfo, setRestaurantInfo] = useState(null)
+  const [showReviews, setShowReviews] = useState(false)
 
   const { cartItems, addToCart, updateQuantity } = useCart()
-  const navigate = useNavigate()
 
+  // check if redirected from Orders page with ?review=true
+  const autoOpenReview = new URLSearchParams(location.search).get("review") === "true"
+
+  // if redirected from Orders, auto-expand the review section
+  useEffect(() => {
+    if (autoOpenReview) setShowReviews(true)
+  }, [autoOpenReview])
+
+  // fetch menu items
   useEffect(() => {
     const fetchMenu = async () => {
       setLoading(true)
@@ -27,6 +42,19 @@ const Menu = () => {
     fetchMenu()
   }, [id])
 
+  // fetch restaurant info for rating summary
+  useEffect(() => {
+    const fetchRestaurantInfo = async () => {
+      try {
+        const res = await API.get(`/restaurants/${id}`)
+        setRestaurantInfo(res.data.data)
+      } catch (err) {
+        // fail silently — rating summary is non-critical
+      }
+    }
+    fetchRestaurantInfo()
+  }, [id])
+
   const getQuantity = (itemId) => {
     const found = cartItems.find((i) => i._id === itemId)
     return found ? found.quantity : 0
@@ -34,10 +62,12 @@ const Menu = () => {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
+
       {/* back button */}
       <button
         onClick={() => navigate("/restaurants")}
-        className="text-gray-500 hover:text-craveo-600 text-sm font-medium mb-4 flex items-center gap-1">
+        className="text-gray-500 hover:text-craveo-600 text-sm font-medium mb-4 flex items-center gap-1"
+      >
         ← Back to restaurants
       </button>
 
@@ -78,11 +108,8 @@ const Menu = () => {
         <div className="space-y-4">
           {menu.map((item) => {
             const qty = getQuantity(item._id)
-
             return (
-              <div
-                key={item._id}
-                className="bg-white border border-gray-200 rounded-xl p-4 flex gap-4 items-center hover:shadow-sm transition">
+              <div key={item._id} className="bg-white border border-gray-200 rounded-xl p-4 flex gap-4 items-center hover:shadow-sm transition">
                 {/* image */}
                 <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                   {item.image ? (
@@ -127,13 +154,54 @@ const Menu = () => {
         </div>
       )}
 
-      {/* floating "View Cart" bar when cart has items */}
+      {/* rating summary + review toggle */}
+      {restaurantInfo && (
+        <div className="mt-10 border-t border-gray-200 pt-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <StarRating
+                value={Math.round((restaurantInfo.rating || 0) * 2) / 2}
+                mode="display"
+                size="text-xl"
+              />
+              <span className="text-gray-700 font-medium">
+                {restaurantInfo.rating > 0 ? restaurantInfo.rating : "No ratings yet"}
+              </span>
+              {restaurantInfo.numberOfReviews > 0 && (
+                <span className="text-gray-400 text-sm">
+                  ({restaurantInfo.numberOfReviews} review{restaurantInfo.numberOfReviews !== 1 ? "s" : ""})
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={() => setShowReviews(!showReviews)}
+              className="text-craveo-600 font-medium text-sm hover:underline"
+            >
+              {showReviews ? "Hide reviews ↑" : "View all reviews ↓"}
+            </button>
+          </div>
+
+          {/* inline expandable review section */}
+          {showReviews && (
+            <ReviewSection
+              restaurantId={id}
+              autoOpen={autoOpenReview}
+            />
+          )}
+        </div>
+      )}
+
+      {/* floating cart bar */}
       {cartItems.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-craveo-500 text-white py-4 px-6 flex items-center justify-between shadow-lg">
           <span className="font-medium">
-            {cartItems.reduce((sum, i) => sum + i.quantity, 0)} item(s) in cart
+            {cartItems.reduce((sum, i) => sum + i.quantity, 0)} items in cart
           </span>
-          <button onClick={() => navigate("/cart")} className="bg-white text-craveo-600 px-5 py-2 rounded-lg font-semibold hover:bg-craveo-50 transition">
+          <button
+            onClick={() => navigate("/cart")}
+            className="bg-white text-craveo-600 px-5 py-2 rounded-lg font-semibold hover:bg-craveo-50 transition"
+          >
             View Cart →
           </button>
         </div>

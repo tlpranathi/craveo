@@ -11,7 +11,7 @@ const menuRoutes = require("./routes/menuRoutes")
 const errorHandler = require("./middleware/errorHandler")
 const orderRoutes = require("./routes/orderRoutes")
 const userRoutes = require("./routes/userRoutes")
-
+const reviewRoutes = require("./routes/reviewRoutes")
 
 const app = express()
 
@@ -26,12 +26,13 @@ app.use("/api/restaurants", restaurantRoutes)
 app.use("/api/menu", menuRoutes)
 app.use("/api/orders", orderRoutes)
 app.use("/api/users", userRoutes)
-app.use(errorHandler)
-
+app.use("/api/reviews", reviewRoutes)
 
 app.get("/", (req, res)=>{
     res.send("craveo API running")
 })
+
+app.use(errorHandler)
 
 app.listen(5000, ()=>{
     console.log("server running on port 5000")

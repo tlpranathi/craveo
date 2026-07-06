@@ -1,12 +1,12 @@
 const express = require("express")
 const router = express.Router()
 const { createReview, getRestaurantReviews } = require("../controllers/reviewController")
-const { protect } = require("../middleware/authMiddleware")
+const protect  = require("../middleware/protect")
 const { validate } = require("../middleware/validator")
-const { createReviewValidator } = require("../validators/reviewValidator")
+const { createReviewValidator } = require("../validators/createReviewValidator")
 
 
-router.post("/reviews", protect, createReviewValidator, validate, createReview)
-router.get("/reviews/:restaurantId", getRestaurantReviews)
+router.post("/", protect, createReviewValidator, validate, createReview)
+router.get("/:restaurantId", getRestaurantReviews)
 
 module.exports = router

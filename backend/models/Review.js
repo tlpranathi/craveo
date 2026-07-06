@@ -20,7 +20,7 @@ const ReviewSchema = new mongoose.Schema({
     rating: {
         type: Number,
         required: true,
-        min: 0,
+        min: [0.5, "Rating must be at least 0.5"],
         max: 5,
         validate: {
             validator: (value) => value % 0.5 === 0,
@@ -29,7 +29,7 @@ const ReviewSchema = new mongoose.Schema({
     },
     comment: {
         type: String,
-        maxlength: 500,
+        maxlength: [500, "Comment cannot exceed 500 characters"],
         trim: true,
         default: ""
     }

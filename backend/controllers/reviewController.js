@@ -15,9 +15,9 @@ const createReview = async (req, res, next) => {
     if (order.user.toString() !== req.user._id.toString()) { throw new AppError("Not authorized to review this order.", 403) }
     // check delivery status
     if (order.status.toLowerCase() !== "delivered") { throw new AppError("You can only review delivered orders.", 400) }
-    // check if already reviewed
-    const existingReview = await Review.findOne({ order: orderId })
-    if (existingReview) { throw new AppError("You have already reviewed this order.", 400) }
+    // check if already reviewed for each order
+    const existingReview = await Review.findOne({ order: orderId, user: req.user._id })
+    if (existingReview) throw new AppError("You have already reviewed this order.", 400)
     // create review
     const review = await Review.create({
       user: req.user._id,

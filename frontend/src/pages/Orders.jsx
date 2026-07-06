@@ -75,6 +75,10 @@ export default function Orders() {
     }
   }
 
+  const reviewOrder = (order) => {
+  navigate(`/menu/${order.restaurant._id}?review=true`)
+}
+
   return (
     <div>
       <div className="bg-craveo-600 px-4 py-8">
@@ -146,6 +150,18 @@ export default function Orders() {
                   {order.status === "pending" && (
                     <button onClick={() => handleCancel(order._id)} className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition">
                       Cancel order
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
+                  {order.status === "delivered" ? (
+                    <button onClick={() => reviewOrder(order)} className="text-craveo-600 hover:text-craveo-700 text-sm font-medium border border-craveo-200 px-3 py-1.5 rounded-full hover:bg-craveo-50 transition">
+                      Write a review
+                    </button>
+                  ) : (
+                    <button disabled className="text-gray-300 text-sm font-medium border border-gray-200 px-3 py-1.5 rounded-full cursor-not-allowed" title="Available after order is delivered">
+                      Write a review
                     </button>
                   )}
                 </div>
