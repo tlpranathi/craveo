@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
 
 const statusStyles = {
@@ -51,6 +51,7 @@ export default function Orders() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -89,6 +90,12 @@ export default function Orders() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
+        {location.state?.paymentSuccess && (
+  <div className="border-l-4 border-green-500 bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
+    <p className="font-semibold">✅ Payment Successful!</p>
+    <p>Your order has been placed successfully.</p>
+  </div>
+)}
         {loading && (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
@@ -129,9 +136,25 @@ export default function Orders() {
                     <h3 className="font-semibold text-gray-900">{order.restaurant?.name || "Restaurant"}</h3>
                     <p className="text-xs text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
                   </div>
-                  <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${statusStyles[order.status]}`}>
-                    {order.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-2">
+  <span
+    className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${statusStyles[order.status]}`}
+  >
+    {order.status}
+  </span>
+
+  <span
+    className={`text-xs font-semibold px-3 py-1 rounded-full ${
+      order.payment?.status === "Paid"
+        ? "bg-green-100 text-green-700"
+        : order.payment?.status === "Pending"
+        ? "bg-yellow-100 text-yellow-700"
+        : "bg-red-100 text-red-700"
+    }`}
+  >
+    Payment: {order.payment?.status || "Pending"}
+  </span>
+</div>
                 </div>
 
                 <StatusTrail status={order.status} />

@@ -44,7 +44,17 @@ const orderSchema = new mongoose.Schema ({
         type: String,
         enum: ["pending", "confirmed", "preparing", "delivered", "cancelled"],
         default: "pending"
-    }
+    },
+    payment: {
+    status: {
+        type: String,
+        enum: ["Pending", "Paid", "Failed", "Refunded"],
+        default: "Pending"
+    },
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
+    razorpaySignature: String
+}
 }, {timestamps: true})
 
 module.exports = mongoose.model("Order", orderSchema)

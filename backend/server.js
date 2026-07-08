@@ -12,6 +12,7 @@ const errorHandler = require("./middleware/errorHandler")
 const orderRoutes = require("./routes/orderRoutes")
 const userRoutes = require("./routes/userRoutes")
 const reviewRoutes = require("./routes/reviewRoutes")
+const paymentRoutes = require("./routes/paymentRoutes");
 
 const app = express()
 
@@ -47,6 +48,7 @@ app.use("/api/menu", menuRoutes)
 app.use("/api/orders", orderRoutes)
 app.use("/api/users", userRoutes)
 app.use("/api/reviews", reviewRoutes)
+app.use("/api/payment", paymentRoutes);
 
 app.get("/", (req, res)=>{
     res.send("craveo API running")

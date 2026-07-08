@@ -11,20 +11,74 @@ export default function Cart() {
   const navigate = useNavigate()
 
   const handlePlaceOrder = async () => {
-    setError("")
-    setLoading(true)
-    try {
-      const restaurantId = cartItems[0].restaurantId
-      if (!restaurantId) throw new Error("Restaurant info missing. Please re-add items.")
-      await API.post("/orders", { restaurantId, items: cartItems })
-      clearCart()
-      navigate("/orders")
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to place order.")
-    } finally {
-      setLoading(false)
+  setError("");
+  setLoading(true);
+
+  try {
+    const restaurant = cartItems[0].restaurantId;
+
+    if (!restaurant) {
+      throw new Error("Restaurant info missing. Please re-add items.");
     }
+
+    // create razorpay order
+    const { data } = await API.post("/payment/create-order", {
+      restaurant,
+      items: cartItems.map(item => ({
+        menuItemId: item._id,
+        quantity: item.quantity
+      }))
+    });
+
+    const paymentData = data.data;
+
+    const options = {
+      key: paymentData.key,
+      amount: paymentData.amount,
+      currency: paymentData.currency,
+      order_id: paymentData.razorpayOrderId,
+      modal: {
+        ondismiss: () => {
+          setLoading(false);
+        }
+    },
+
+      name: "Craveo",
+      description: "Food Order",
+
+      handler: async function (response) {
+      try {
+        await API.post("/payment/verify", {
+            orderId: paymentData.orderId,
+            razorpay_order_id:
+                response.razorpay_order_id,
+            razorpay_payment_id:
+                response.razorpay_payment_id,
+            razorpay_signature:
+                response.razorpay_signature
+        });
+        clearCart();
+        navigate("/orders", {
+          state: {
+            paymentSuccess: true
+          }
+        });
+    } catch (err) {
+        setError("Payment verification failed.");
+    }
+},
+      theme: {
+        color: "#f97316"
+      }
+    };
+    const razorpay = new window.Razorpay(options);
+    razorpay.open();
+  } catch (err) {
+    setError(err.response?.data?.message || err.message || "Failed to place order.");
+  } finally {
+    setLoading(false);
   }
+};
 
   if (cartItems.length === 0) {
     return (
