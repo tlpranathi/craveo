@@ -1,89 +1,95 @@
 # Craveo
 
-A full-stack food discovery and ordering app, similar to Zomato/Swiggy but built from scratch as a learning project — React on the frontend, Node/Express/MongoDB on the backend.
+A full-stack food ordering platform — React frontend, Node/Express/MongoDB backend — built as a personal project to go deep on things a typical CRUD app skips: real payment verification, role-based access, rate limiting, and consistent error handling across the API.
 
-**Status:** Core app is working — auth, ordering, admin dashboard, search/filtering. Reviews, image upload, real-time updates, and payments are still being added.
-
----
+**Status:** Core flow is live end-to-end — signup through to a paid, tracked order. See [Roadmap](#roadmap) for what's next.
 
 ## Live Demo
 
-- Frontend: [link coming after deployment]
-- Backend API: [link coming after deployment]
+| | |
+|---|---|
+| Frontend | [craveoo.vercel.app](https://craveoo.vercel.app/) |
+| Backend API | [craveo-tkyw.onrender.com](https://craveo-tkyw.onrender.com) |
+
+> Backend is on Render's free tier — the first request after a period of inactivity can take ~30-50s to spin up.
 
 ---
 
-## What it does
 
-Users can browse restaurants, search and filter by cuisine, add items to a cart, place orders, and track them through to delivery. There's also a separate admin side where restaurants, menus, and order status can all be managed.
+## Features
 
-### Auth
-- Signup/login with JWT, passwords hashed with bcrypt
-- Middleware checks the token on protected routes and attaches the logged-in user to the request
-- Regular users vs admins have different permissions
-- Users can update their profile and change their password
+**Users**
+- Signup/login (JWT + bcrypt), profile editing, password change
+- Browse restaurants with search, cuisine filters, and pagination
+- Cart persists in localStorage across refreshes
+- Checkout via Razorpay, with server-verified pricing and payment signatures
+- Order history, live status, and cancellation within a short window after placing
+- Rate and review restaurants after ordering
 
-### Ordering
-- Search restaurants by name/location, filter by cuisine — both handled server-side, with the search box debounced so it's not firing a request on every keystroke
-- Paginated restaurant lists
-- Cart stays in localStorage so it survives refreshes, quantities update live
-- Place an order, see your order history, track status, cancel within a short window after placing it
-- UI styled with Tailwind, including a custom theme and a mobile nav
-
-### Admin
-- Only accessible if your account has the admin role
-- Add/edit/delete restaurants and menu items, with menu management nested under each restaurant
-- Move orders through their statuses (pending → confirmed → preparing → delivered)
-- Cancelling an order (customer) and advancing its status (admin) go through two different checks — one verifies you own the order and it's within the time limit, the other just checks you're an admin
-
-### Backend
-- MVC structure — models, controllers, routes kept separate
-- One custom error class and one error-handling middleware used everywhere, so every error returns the same shape
-- All API responses follow the same `{ success, message, data }` format
+**Admin**
+- Role-gated dashboard, separate from regular user access
+- Full CRUD on restaurants and their menus
+- Move orders through their lifecycle (pending → confirmed → preparing → delivered)
 
 ---
 
 ## Stack
 
-| | |
+| Layer | Tech |
 |---|---|
 | Frontend | React (Vite), React Router, Tailwind CSS, Axios |
 | Backend | Node.js, Express |
 | Database | MongoDB, Mongoose |
 | Auth | JWT, bcrypt |
+| Payments | Razorpay |
+| Security | Helmet, express-validator, CORS allowlist, custom rate limiter |
+| Hosting | Vercel (frontend), Render (backend) |
 
 ---
 
-## API
+## API Reference
 
 **Auth**
 ```
 POST   /api/auth/signup
-POST   /api/auth/login
+POST   /api/auth/login              rate-limited: 5 req / 15 min
 ```
 
 **Restaurants**
 ```
-GET    /api/restaurants            (supports ?search= and ?cuisine=, paginated)
-POST   /api/restaurants            admin only
-PUT    /api/restaurants/:id        admin only
-DELETE /api/restaurants/:id        admin only
+GET    /api/restaurants             ?search= &cuisine=  (paginated)
+GET    /api/restaurants/:id
+POST   /api/restaurants             admin
+PUT    /api/restaurants/:id         admin
+DELETE /api/restaurants/:id         admin
 ```
 
 **Menu**
 ```
 GET    /api/menu/:restaurantId
-POST   /api/menu                   admin only
-PUT    /api/menu/:id               admin only
-DELETE /api/menu/:id               admin only
+POST   /api/menu                    admin
+PUT    /api/menu/:id                admin
+DELETE /api/menu/:id                admin
 ```
 
 **Orders**
 ```
 POST   /api/orders
 GET    /api/orders/my-orders
-GET    /api/orders                 admin only
+GET    /api/orders                  admin
 PATCH  /api/orders/:id/status
+```
+
+**Payments**
+```
+POST   /api/payment/create-order
+POST   /api/payment/verify
+```
+
+**Reviews**
+```
+POST   /api/reviews
+GET    /api/reviews/:restaurantId
 ```
 
 **Users**
@@ -95,22 +101,23 @@ PUT    /api/users/change-password
 
 ---
 
-## Project structure
+## Project Structure
 
 ```
 craveo/
 ├── backend/
-│   ├── config/
+│   ├── config/           # DB connection, Razorpay client
 │   ├── controllers/
-│   ├── middleware/
+│   ├── middleware/       # auth, admin gate, error handler, rate limiter, validator
 │   ├── models/
 │   ├── routes/
+│   ├── validators/
 │   ├── utils/
 │   └── server.js
 │
 └── frontend/
     └── src/
-        ├── components/
+        ├── components/    # incl. ReviewSection, StarRating, carousels
         ├── context/
         ├── pages/
         ├── pages/admin/
@@ -119,9 +126,9 @@ craveo/
 
 ---
 
-## Running it locally
+## Running Locally
 
-**Requirements:** Node 18+, MongoDB (local or Atlas)
+**Requirements:** Node 18+, MongoDB (local or Atlas), a Razorpay account (test keys work fine)
 
 **Backend**
 ```bash
@@ -129,12 +136,14 @@ cd backend
 npm install
 ```
 
-Create a `.env` in `backend/`:
-```env
+Create `backend/.env`:
+```
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
 JWT_EXPIRES_IN=7d
 PORT=5000
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 ```
 
 ```bash
@@ -151,3 +160,12 @@ npm run dev
 Frontend runs on `localhost:5173`, backend on `localhost:5000`.
 
 ---
+
+## Roadmap
+
+- [ ] Image upload for restaurants/menu items
+- [ ] Email verification (signup + password changes) and transactional emails (welcome, order updates)
+- [ ] Restaurant owner dashboard — scoped access to manage just their own restaurant
+- [ ] Real-time order status via sockets, instead of polling/refresh
+- [ ] Coupon codes (order-count based, one redeemable per order)
+- [ ] Load testing — simulate concurrent users to find Craveo's actual capacity
