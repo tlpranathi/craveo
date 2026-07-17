@@ -47,7 +47,7 @@ const getMyOrders = async(req, res, next) => {
         // count total orders belonging to logged-in user
         const totalOrders = await Order.countDocuments({user: req.user._id})
         // calculate total pages
-        const totalPages = Math.ceil(totalOrders / limitNumber)
+        const totalPages = Math.max(0, Math.ceil(totalOrders / limitNumber))
 
         // fetch orders belonging to user
         const orders = await Order.find({ user: req.user._id })
@@ -55,6 +55,8 @@ const getMyOrders = async(req, res, next) => {
           .populate("restaurant", "name")
           // sort newest orders first
           .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limitNumber)
         return sendResponse(res, 200, true, "Orders fetched successfully", { orders, page: pageNumber, limit: limitNumber, totalOrders, totalPages})
     } catch (error) {
       next(error)

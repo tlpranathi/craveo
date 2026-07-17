@@ -10,7 +10,7 @@ export default function VerticalCarousel({ images, reverse = false }) {
         }`}
       >
         {allImages.map((img, index) => (
-          <img key={index} src={img} alt="" className="h-150 w-full object-cover shadow-lg flex-shrink-0"
+          <img key={index} src={img} alt="" loading={index < 3 ? "eager" : "lazy"} fetchPriority={index < 3 ? "high" : "auto"} className="h-[650px] w-full object-cover shadow-lg flex-shrink-0"
           />
         ))}
       </div>

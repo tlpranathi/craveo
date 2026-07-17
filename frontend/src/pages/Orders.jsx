@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
+import Pagination from "../components/Pagination";
+
 
 const statusStyles = {
   pending:   "bg-craveo-100 text-craveo-700",
@@ -48,6 +50,9 @@ function StatusTrail({ status }) {
 
 export default function Orders() {
   const [orders, setOrders] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalOrders, setTotalOrders] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const navigate = useNavigate()
@@ -56,8 +61,14 @@ export default function Orders() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await API.get("/orders/my-orders")
+        const res = await API.get("/orders/my-orders", {
+        //setOrders(res.data.data.orders)
+        params: { page, limit: 4,},})
+
         setOrders(res.data.data.orders)
+        setPage(res.data.data.page)
+        setTotalPages(res.data.data.totalPages)
+        setTotalOrders(res.data.data.totalOrders)
       } catch (err) {
         setError("Failed to load orders.")
       } finally {
@@ -65,7 +76,7 @@ export default function Orders() {
       }
     }
     fetchOrders()
-  }, [])
+  }, [page])
 
   const handleCancel = async (orderId) => {
     try {
@@ -85,7 +96,7 @@ export default function Orders() {
       <div className="bg-craveo-600 px-4 py-8">
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold text-white">My Orders</h1>
-          <p className="text-craveo-100 text-sm">{orders.length} order{orders.length !== 1 ? "s" : ""} placed</p>
+          <p className="text-craveo-100 text-sm">{totalOrders} order{totalOrders !== 1 ? "s" : ""} placed</p>
         </div>
       </div>
 
@@ -137,9 +148,7 @@ export default function Orders() {
                     <p className="text-xs text-gray-400 mt-0.5">{new Date(order.createdAt).toLocaleString()}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-  <span
-    className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${statusStyles[order.status]}`}
-  >
+  <span className={`text-xs font-semibold px-3 py-1 rounded-full capitalize ${statusStyles[order.status]}`}>
     {order.status}
   </span>
 
@@ -192,6 +201,8 @@ export default function Orders() {
             ))}
           </div>
         )}
+        <Pagination page={page} totalPages={totalPages} onPageChange={(newPage) => { setPage(newPage) 
+        window.scrollTo({top: 0, behavior: "smooth",})}}/>
       </div>
     </div>
   )

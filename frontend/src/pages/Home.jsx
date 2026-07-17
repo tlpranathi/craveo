@@ -7,17 +7,17 @@ import { MapPinCheckInside, Utensils, ShoppingCart, Bike, Computer } from "lucid
 
 
 const foodImages = [
-  "/food/biriyani.jpg",
-  "/food/dosa.jpg",
   "/food/burger.jpg",
+  "/food/dosa.jpg",
   "/food/pizza.jpg",
   "/food/ramen.jpg",
   "/food/cheesecake.jpg",
-  "/food/coffee.jpg",
+  "/food/biriyani.jpg",
   "/food/fries.jpg",
   "/food/sambhar.jpg",
   "/food/sushi.jpg",
   "/food/chicken-skewers.jpg",
+    "/food/coffee.jpg",
 ]
 
 const Home = () => {

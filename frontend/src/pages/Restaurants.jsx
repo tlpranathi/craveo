@@ -2,8 +2,25 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../services/api"
 import { Search } from "lucide-react"
+import Pagination from "../components/Pagination";
 
-const CUISINES = ["All", "Indian", "Chinese", "Italian", "Mexican", "Fast Food", "Japanese", "Street Food"]
+const CUISINES = ['All', 
+  'American',       'BBQ',
+  'Bakery',         'Biryani',
+  'Burgers',        'Cafe',
+  'Chinese',        'Continental',
+  'Desserts',       'Fast Food',
+  'Healthy',        'Indian',
+  'Italian',        'Japanese',
+  'Korean',         'Lebanese',
+  'Mediterranean',  'Mexican',
+  'Middle Eastern', 'Momos',
+  'North Indian',   'Pizza',
+  'Sandwiches',     'Seafood',
+  'South Indian',   'Street Food',
+  'Thai',           'Vegan',
+  'Vietnamese'
+]
 
 const Restaurants = () => {
   const [restaurants, setRestaurants] = useState([])
@@ -11,6 +28,9 @@ const Restaurants = () => {
   const [error, setError] = useState("")
   const [search, setSearch] = useState("")
   const [cuisine, setCuisine] = useState("")
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalRestaurants, setTotalRestaurants] = useState(0)
 
   const navigate = useNavigate()
 
@@ -18,23 +38,28 @@ const Restaurants = () => {
     const fetchRestaurants = async () => {
       setLoading(true)
       setError("")
+
       try {
-        const params = {}
+        const params = { page, limit: 8,}
+
         if (search) params.search = search
-        if (cuisine && cuisine !== "All") params.cuisine = cuisine
+        if (cuisine) params.cuisine = cuisine
 
         const res = await API.get("/restaurants", { params })
+
         setRestaurants(res.data.data.restaurants)
+        setTotalPages(res.data.data.totalPages)
+        setTotalRestaurants(res.data.data.totalRestaurants)
       } catch (err) {
         setError("Failed to load restaurants. Please try again.")
       } finally {
         setLoading(false)
       }
-    }
+}
 
     const debounce = setTimeout(fetchRestaurants, 400)
     return () => clearTimeout(debounce)
-  }, [search, cuisine])
+  }, [search, cuisine, page])
 
   return (
     <div>
@@ -51,8 +76,8 @@ const Restaurants = () => {
 
           {/* Search bar embedded in hero */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-            <input type="text" placeholder="Search by name or location..." value={search} onChange={(e) => setSearch(e.target.value)} className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"/>
-            <select value={cuisine} onChange={(e) => setCuisine(e.target.value)} className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm">
+            <input type="text" placeholder="Search by name or location..." value={search} onChange={(e) => {setSearch(e.target.value); setPage(1)}} className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"/>
+            <select value={cuisine} onChange={(e) => {setCuisine(e.target.value); setPage(1)}} className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm">
               {CUISINES.map((c) => (
                 <option key={c} value={c === "All" ? "" : c}>
                   {c}
@@ -61,7 +86,7 @@ const Restaurants = () => {
             </select>
 
             {(search || cuisine) && (
-              <button onClick={() => { setSearch(""); setCuisine("") }} className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap">
+              <button onClick={() => { setSearch(""); setCuisine(""); setPage(1) }} className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap">
                 Clear
               </button>
             )}
@@ -74,7 +99,7 @@ const Restaurants = () => {
 
         {!loading && !error && restaurants.length > 0 && (
           <p className="text-gray-500 text-sm mb-5">
-            <span className="text-craveo-600 font-semibold">{restaurants.length}</span> restaurants found
+            <span className="text-craveo-600 font-semibold">{totalRestaurants}</span> restaurants found
           </p>
         )}
 
@@ -156,6 +181,12 @@ const Restaurants = () => {
             ))}
           </div>
         )}
+        {!loading && !error && restaurants.length > 0 && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={(newPage) => {setPage(newPage) 
+          window.scrollTo({
+            top: 0,
+            behavior: "smooth",})}}/>
+          )}
       </div>
     </div>
   )

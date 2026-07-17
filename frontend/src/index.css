@@ -10,13 +10,10 @@
 }
 
 @keyframes scrollUp {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-50%);
-  }
+  from { transform: translateY(-50%); }  /* ← start halfway through */
+  to   { transform: translateY(0); }      /* ← end at top */
 }
+
 
 .animate-scrollUp {
   animation: scrollUp 50s linear infinite;
