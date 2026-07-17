@@ -7,7 +7,6 @@ export default function Profile() {
 
   // edit profile state
   const [name, setName] = useState(user?.name || "")
-  const [email, setEmail] = useState(user?.email || "")
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileMsg, setProfileMsg] = useState("")
   const [profileError, setProfileError] = useState("")
@@ -25,7 +24,7 @@ export default function Profile() {
     setProfileMsg("")
     setProfileLoading(true)
     try {
-      const res = await API.put("/users/profile", { name, email })
+      const res = await API.put("/users/profile", { name })
       login(res.data.data, token) // refresh context with updated user
       setProfileMsg("Profile updated successfully")
     } catch (err) {
@@ -56,11 +55,7 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">My Profile</h1>
 
-      {/*// client/src/pages/Profile.jsx — header card with scalloped edge instead of blobs
-
-// Replace just the profile summary card section with this:*/}
-
-      {/* ── Profile summary card — scalloped bottom edge ───────────────── */}
+      {/* Profile summary card — scalloped bottom edge */}
       <div className="mb-6">
         <div className="bg-craveo-600 rounded-t-2xl p-6">
           <div className="flex items-center gap-4">
@@ -84,7 +79,7 @@ export default function Profile() {
         </svg>
       </div>
 
-      {/* ── Edit profile ───────────────────────────────────────────────── */}
+      {/* Edit profile */}
       <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
         <h3 className="font-semibold text-gray-900 mb-4">Edit profile</h3>
 
@@ -113,19 +108,6 @@ export default function Profile() {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 focus:border-craveo-400"
-            />
-          </div>
-
           <button
             type="submit"
             disabled={profileLoading}
@@ -136,7 +118,7 @@ export default function Profile() {
         </form>
       </div>
 
-      {/* ── Change password ───────────────────────────────────────────── */}
+      {/* Change password */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h3 className="font-semibold text-gray-900 mb-4">Change password</h3>
 

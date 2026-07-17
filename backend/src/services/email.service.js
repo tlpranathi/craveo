@@ -1,8 +1,11 @@
-import dotenv from "dotenv";
+const dotenv = require("dotenv");
 dotenv.config();
 
-import nodemailer from "nodemailer";
-import { welcomeTemplate } from "../templates/welcomeEmail.js";
+const nodemailer = require("nodemailer");
+const { welcomeTemplate } = require("../templates/welcomeEmail");
+const { orderDeliveredTemplate } = require("../templates/orderDeliveredEmail");
+const { passwordChangedTemplate } = require("../templates/passwordChangedEmail");
+const { passwordResetTemplate } = require("../templates/passwordResetEmail");
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -12,11 +15,42 @@ const transporter = nodemailer.createTransport({
     },
 });
 
-export async function sendWelcomeEmail(email, name) {
-    await transporter.sendMail({
+async function sendWelcomeEmail(email, name) {
+    return transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Welcome to Craveo",
         html: welcomeTemplate(name),
     });
 }
+
+async function sendOrderDeliveredEmail(email, name, reviewLink) {
+    return transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your order has been delivered!",
+        html: orderDeliveredTemplate(name, reviewLink),
+    });
+}
+
+async function sendPasswordChangedEmail(email, name, resetLink) {
+    return transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your Craveo password was changed",
+        html: passwordChangedTemplate(name, resetLink),
+    });
+}
+
+async function sendPasswordResetEmail(email, name) {
+    return transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Reset your Craveo password",
+        html: passwordResetTemplate(name),
+    });
+}
+
+module.exports = {
+    sendWelcomeEmail, sendPasswordResetEmail, sendPasswordChangedEmail, sendOrderDeliveredEmail
+};

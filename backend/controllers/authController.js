@@ -2,6 +2,7 @@ const User = require("../models/User")
 const jwt = require("jsonwebtoken")
 const sendResponse = require("../utils/response") // keep API responses clean
 const AppError = require("../utils/AppError") // cleaner error handling
+const { sendWelcomeEmail } = require("../src/services/email.service.js")
 
 
 // generate JWT
@@ -26,7 +27,6 @@ const signup = async (req, res, next) => {
             const user = await User.create({name, email, password})
             
             // send welcome email
-            import { sendWelcomeEmail } from "../services/email.service.js";
             try { await sendWelcomeEmail(user.email, user.name); }
             catch (err) { console.error("Failed to send welcome email:", err) }
 

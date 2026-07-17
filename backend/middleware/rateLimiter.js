@@ -9,7 +9,7 @@ const authLimiter = rateLimit({
     max: 5,
     // return JSON response instead of default HTML/text
     handler: (req, res) => {
-        return sendResponse(res, 429, false, "Too many login attempts. Please try again later.")},
+        return sendResponse(res, 429, false, "Too many login/signup attempts. Please try again later.")},
     // standard rate limit headers
     standardHeaders: true,
     // disable legacy X-RateLimit headers

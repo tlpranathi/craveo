@@ -1,6 +1,7 @@
 const Order = require("../models/Order")
 const AppError = require("../utils/AppError")
 const sendResponse = require("../utils/response")
+const { sendOrderDeliveredEmail } = require("../src/services/email.service")
 
 // place order
 // create a new order for a logged-in user
@@ -69,7 +70,7 @@ const updateOrderStatus = async (req, res, next) => {
         const { status } = req.body
 
         // find order by ID
-        const order = await Order.findById(req.params.id)
+        const order = await Order.findById(req.params.id).populate("user", "name email")
 
         if(!order) {
           throw new AppError("order not found", 404)
@@ -96,6 +97,12 @@ const updateOrderStatus = async (req, res, next) => {
 
         order.status = status
         await order.save()
+
+        if (order.status == "delivered") {
+        try { await sendOrderDeliveredEmail(order.user.email, order.user.name, `${process.env.FRONTEND_URL}/orders`); }
+        catch (err) { console.error("Failed to send order delivered email: ", err) }
+
+        }
 
         return sendResponse(res, 200, true, "Order status updated", { order })
     } catch (error) {

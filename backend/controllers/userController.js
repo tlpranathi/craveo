@@ -1,6 +1,9 @@
 const User = require("../models/User")
 const sendResponse = require("../utils/response") 
 const AppError = require("../utils/AppError")
+//const { sendPasswordResetEmail } = require("../src/services/email.service.js")
+const { sendPasswordChangedEmail } = require("../src/services/email.service.js")
+
 
 // GET /api/users/profile
 const getProfile = async(req, res, next) => {
@@ -19,13 +22,12 @@ const getProfile = async(req, res, next) => {
 // PUT /api/users/profile
 const updateProfile = async(req, res, next) => {
     try {
-        const {name, email} = req.body
+        const {name} = req.body
 
         const user = await User.findById(req.user._id)
         if(!user) throw new AppError("User not found", 404)
 
         user.name = name || user.name
-        user.email = email || user.email
 
         await user.save()
       
@@ -58,6 +60,12 @@ const changePassword = async(req, res, next) => {
     user.password = newPassword
 
     await user.save()
+    try {
+        await sendPasswordChangedEmail(user.email, user.name);
+    } catch (err) {
+        console.error(err);
+    }
+
     return sendResponse(res, 200, true, "Password updated successfully")
     } catch (error) {
         next(error)
