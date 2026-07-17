@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken")
 const sendResponse = require("../utils/response") // keep API responses clean
 const AppError = require("../utils/AppError") // cleaner error handling
 
+
 // generate JWT
 const generateToken = (userId) => {
     return jwt.sign({ id: userId }, // payload - data stored inside token
@@ -23,6 +24,11 @@ const signup = async (req, res, next) => {
 
             // create user - password is hashed automatically by pre-save hook
             const user = await User.create({name, email, password})
+            
+            // send welcome email
+            import { sendWelcomeEmail } from "../services/email.service.js";
+            try { await sendWelcomeEmail(user.email, user.name); }
+            catch (err) { console.error("Failed to send welcome email:", err) }
 
             // generate token immediately - user is logged in after signup
             const token = generateToken(user._id)
