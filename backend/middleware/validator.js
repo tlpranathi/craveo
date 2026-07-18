@@ -9,7 +9,7 @@ const validate = (req, res, next) => {
 
     // if any validation errors exist, stop the request and send a 400 Bad Request reponse
     if(!errors.isEmpty()) {
-        return sendResponse(res, 400, false, "Validation failed", errors.array())
+        return sendResponse(res, 400, false, errors.array()[0].msg, errors.array())
     }
     // no validation errors
     // continue to the next middleware/controllers

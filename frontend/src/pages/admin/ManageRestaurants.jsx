@@ -9,6 +9,8 @@ export default function ManageRestaurants() {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [initialLoad, setInitialLoad] = useState(true) // separate flag for initial load
+
 
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
@@ -17,15 +19,16 @@ export default function ManageRestaurants() {
   const [formError, setFormError] = useState("")
 
   const fetchRestaurants = async () => {
-    setLoading(true)
-    try {
+    if (initialLoad) setLoading(true) // only show skeleton on first load
+    try { 
       const res = await API.get("/restaurants")
       setRestaurants(res.data.data.restaurants)
     } catch (err) {
       setError("Failed to load restaurants.")
     } finally {
       setLoading(false)
-    }
+      setInitialLoad(false) // mark initial load done
+     }
   }
 
   useEffect(() => { fetchRestaurants() }, [])
@@ -58,8 +61,14 @@ export default function ManageRestaurants() {
 
       if (editingId) {
         await API.put(`/restaurants/${editingId}`, payload)
+        // update just row in state - no refetch needed
+        setRestaurants((prev) =>
+          prev.map((r) => (r._id === editingId? {...r, ...payload} : r))
+        )
       } else {
         await API.post("/restaurants", payload)
+        // append new restaurant to existing list - no refetch needed
+        setRestaurants((prev) => [...prev, res.data.data])
       }
 
       setShowModal(false)
