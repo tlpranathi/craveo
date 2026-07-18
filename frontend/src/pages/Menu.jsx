@@ -42,23 +42,27 @@ const Menu = () => {
     fetchMenu()
   }, [id])
 
-  // fetch restaurant info for rating summary
-  useEffect(() => {
-    const fetchRestaurantInfo = async () => {
-      try {
-        const res = await API.get(`/restaurants/${id}`)
-        setRestaurantInfo(res.data.data)
-      } catch (err) {
-        // fail silently — rating summary is non-critical
-      }
+  const fetchRestaurantInfo = async () => {
+    try {
+      const res = await API.get(`/restaurants/${id}`);
+      setRestaurantInfo(res.data.data);
+    } catch (err) {
+      // fail silently
     }
-    fetchRestaurantInfo()
-  }, [id])
+  };
+
+  useEffect(() => {
+    fetchRestaurantInfo();
+  }, [id]);
 
   const getQuantity = (itemId) => {
     const found = cartItems.find((i) => i._id === itemId)
     return found ? found.quantity : 0
   }
+
+  const handleReviewSubmitted = async () => {
+  await fetchRestaurantInfo();
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -184,11 +188,7 @@ const Menu = () => {
 
           {/* inline expandable review section */}
           {showReviews && (
-            <ReviewSection
-              restaurantId={id}
-              autoOpen={autoOpenReview}
-              reviewOrderId={reviewOrderId}
-            />
+            <ReviewSection restaurantId={id} autoOpen={autoOpenReview} reviewOrderId={reviewOrderId} onReviewSubmitted={handleReviewSubmitted}/>
           )}
         </div>
       )}

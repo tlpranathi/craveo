@@ -133,7 +133,7 @@ const Home = () => {
       <div className="bg-gradient-to-br from-orange-400 via-orange-500 to-orange-700 py-16">
         <div className="max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-bold text-white">Top rated near you</h2>
+            <h2 className="text-2xl font-bold text-white">Top Rated Restaurants</h2>
             <button onClick={() => navigate("/restaurants")} className="text-white font-medium text-sm hover:underline whitespace-nowrap">
               View all →
             </button>

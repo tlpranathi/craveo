@@ -3,6 +3,7 @@ const Order = require("../models/Order")
 const Restaurant = require("../models/Restaurant")
 const AppError = require("../utils/AppError")
 const sendResponse = require("../utils/response")
+const updateRestaurantRating = require("../utils/updateRestaurantRating");
 
 // POST /api/reviews
 const createReview = async (req, res, next) => {
@@ -26,16 +27,7 @@ const createReview = async (req, res, next) => {
       rating,
       comment
     })
-    // recalculate restaurant rating
-    const reviews = await Review.find({ restaurant: order.restaurant })
-    const numberOfReviews = reviews.length
-    const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) /numberOfReviews
-    
-    console.log("reviews found:", numberOfReviews)
-    console.log("ratings:", reviews.map(r => r.rating))
-    console.log("average:", averageRating)
-    
-    await Restaurant.findByIdAndUpdate(order.restaurant, { averageRating: Number(averageRating.toFixed(1)), numberOfReviews })
+    await updateRestaurantRating(review.restaurant);
     return sendResponse(res, 201, true, "Review added successfully.", { review })
   } catch (error) {
     next(error)

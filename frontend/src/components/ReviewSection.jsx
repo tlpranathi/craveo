@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext"
 import API from "../services/api"
 import StarRating from "./StarRating"
 
-export default function ReviewSection({ restaurantId, autoOpen = false, reviewOrderId = null }) {
+export default function ReviewSection({ restaurantId, autoOpen = false, reviewOrderId = null, onReviewSubmitted }) {
   const { user } = useAuth()
   const formRef = useRef(null)
 
@@ -105,6 +105,9 @@ export default function ReviewSection({ restaurantId, autoOpen = false, reviewOr
         rating,
         comment,
       })
+      if (onReviewSubmitted) {
+        await onReviewSubmitted();
+      }
       setAlreadyReviewed(true)
       fetchReviews()
     } catch (err) {
