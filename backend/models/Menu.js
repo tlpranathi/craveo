@@ -13,7 +13,9 @@ const MenuSchema = new mongoose.Schema({
     },
     name: {
         type: String, 
-        required: true
+        required: true,
+        trim: true,
+        lowercase: true
     },
     price: {
         type: Number, 
@@ -21,7 +23,11 @@ const MenuSchema = new mongoose.Schema({
     },
     description: String,
     image: String
-})
+});
+
+MenuSchema.index(
+    {restaurantId:1, name:1}, {unique: true} 
+); // one menu item name per restaurant
 
 // create and export Menu model
 // "Menu" => mongoose automatically converts this to "menus" collection in MongoDB

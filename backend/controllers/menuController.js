@@ -26,11 +26,19 @@ const getMenu = async (req, res, next) => {
 const createMenuItem = async (req, res, next) => {
     try {
          // check restaurant exists
-        const restaurant = await Restaurant.findById(req.body.restaurantId)
+        const { restaurantId, name } = req.body;
+        const restaurant = await Restaurant.findById(restaurantId)
         if (!restaurant) {
             throw new AppError("Restaurant not found", 404)
         }
-        const menuItem = await Menu.create(req.body)
+        // check for duplicate menu item in the same restaurant
+        const existingItem = await Menu.findOne({restaurantId,
+        name: new RegExp(`^${name.trim()}$`, "i"), // case-insensitive match
+        });
+
+        if (existingItem) { throw new AppError("A menu item with this name already exists for this restaurant", 400); }
+        
+        const menuItem = await Menu.create({...req.body, name: name.trim()});
         return sendResponse(res, 201, true, "Menu item created successfully", menuItem)
     } catch (error) {
         next(error)
