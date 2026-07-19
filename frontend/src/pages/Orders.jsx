@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
 import Pagination from "../components/Pagination";
+import socket from "../services/socketService"
 
 
 const statusStyles = {
@@ -57,6 +58,48 @@ export default function Orders() {
   const [error, setError] = useState("")
   const navigate = useNavigate()
   const location = useLocation()
+  
+  // Add at the top of your Orders component, after your state declarations
+useEffect(() => {
+  socket.on("connect", () => console.log("✅ Socket connected:", socket.id))
+  socket.on("disconnect", () => console.log("❌ Socket disconnected"))
+  socket.on("orderStatusUpdated", (data) => console.log("📦 Status update received:", data))
+
+  return () => {
+    socket.off("connect")
+    socket.off("disconnect")
+    socket.off("orderStatusUpdated")
+  }
+}, [])
+
+
+  // joins each order's socket room and listens for status updates
+  useEffect(() => {
+    if (orders.length === 0) return
+
+    // join room for every order on the page
+    orders.forEach((order) => {
+      socket.emit("joinOrderRoom", order._id)
+    })
+
+    // listen for status updates
+    const handleStatusUpdate = ({ orderId, status }) => {
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, status } : o))
+      )
+    }
+
+    socket.on("orderStatusUpdated", handleStatusUpdate)
+
+    // cleanup — leave rooms and remove listener when component unmounts
+    return () => {
+      orders.forEach((order) => {
+        socket.emit("leaveOrderRoom", order._id)
+      })
+      socket.off("orderStatusUpdated", handleStatusUpdate)
+    }
+}, [orders.map(o => o._id).join(",")]) // depends on actual IDs not just length
+
 
   useEffect(() => {
   const timers = orders.map((order) => {

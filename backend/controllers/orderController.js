@@ -130,6 +130,16 @@ const updateOrderStatus = async (req, res, next) => {
         order.status = status
         await order.save()
 
+        // emit real time updates to order room
+        const io = req.app.get("io")
+        if (io) {
+          console.log(`Emitting to room: order_${order._id}`)
+          io.to(`order_${order._id}`).emit("orderStatusUpdated", {
+            orderId: order._id,
+            status: order.status,
+          })
+        }
+
         if (order.status == "delivered") {
         try { await sendOrderDeliveredEmail(order.user.email, order.user.name, order.items, order.restaurant.name, `${process.env.FRONTEND_URL}/orders`); }
         catch (err) { console.error("Failed to send order delivered email: ", err) }

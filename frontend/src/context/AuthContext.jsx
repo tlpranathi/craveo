@@ -1,62 +1,55 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"  
+import socket from "../services/socketService"
 
-// create authentication context
-// used to share auth state across entire app
 const AuthContext = createContext(null)
 
-// provider component
-// wraps the app and provides auth data/functions
 export const AuthProvider = ({ children }) => {
-    // initialize from local storage so auth survives page refresh
-    const[user, setUser] = useState(() => {
-        const stored = localStorage.getItem("craveo_user")
-        //return stored ? JSON.parse(stored) : null 
-        try {
-            return stored ? JSON.parse(stored) : null;
-            } catch (err) {
-            localStorage.removeItem("craveo_user");
-            return null;
-        }
-    })
-    // initialize JWT token from localStorage
-    const [token, setToken] = useState(() => {      
-        return localStorage.getItem("craveo_token") || null
-})
-    // called after successful login/signup
-    const login = (userData, jwtToken) => {
-        // update react state
-        setUser(userData)
-        setToken(jwtToken)
-        // persist auth data in browser storage
-        localStorage.setItem("craveo_user", JSON.stringify(userData))
-        localStorage.setItem("craveo_token", jwtToken)
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem("craveo_user")
+    try {
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      localStorage.removeItem("craveo_user")
+      return null
     }
+  })
 
-    // called when user logs out
-    const logout = () => {
-        // clear react state
-        setUser(null)
-        setToken(null)
-        // remove saved auth data
-        localStorage.removeItem("craveo_user")
-        localStorage.removeItem("craveo_token")
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem("craveo_token") || null
+  })
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("craveo_token")
+    if (storedToken && !socket.connected) {
+      socket.connect()
     }
+  }, [])  // runs once on mount
 
-    return (
-        // make auth state/functions available globally
-        <AuthContext.Provider value={{ user, token, login, logout }}>
-            {/*render wrapped components*/}
-            {children}
-        </AuthContext.Provider>
-    )   
+  const login = (userData, jwtToken) => {
+    setUser(userData)
+    setToken(jwtToken)
+    localStorage.setItem("craveo_user", JSON.stringify(userData))
+    localStorage.setItem("craveo_token", jwtToken)
+    if (!socket.connected) socket.connect()
+  }
+
+  const logout = () => {
+    setUser(null)
+    setToken(null)
+    localStorage.removeItem("craveo_user")
+    localStorage.removeItem("craveo_token")
+    socket.disconnect()
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }
 
-// custom hook - clean way to consume context anywhere
-// avoids importing useContext everywhere
 export const useAuth = () => {
-    const context = useContext(AuthContext)
-    if (!context) {
-        throw new Error("useAuth must be used inside AuthProvider")
-    }
-    return context
+  const context = useContext(AuthContext)
+  if (!context) throw new Error("useAuth must be used inside AuthProvider")
+  return context
 }
