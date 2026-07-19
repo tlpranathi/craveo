@@ -12,7 +12,6 @@ Craveo lets users discover restaurants, place orders, pay securely online, track
 
 | Resource | Link |
 |---|---|
-| Source Code | https://github.com/tlpranathi/craveo |
 | Live App | https://craveoo.vercel.app/ |
 | Backend API | https://craveo-tkyw.onrender.com |
 
