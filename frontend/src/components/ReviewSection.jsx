@@ -100,15 +100,11 @@ export default function ReviewSection({ restaurantId, autoOpen = false, reviewOr
 
     setSubmitting(true)
     try {
-      await API.post("/reviews", {
-        orderId: eligibleOrder._id,
-        rating,
-        comment,
-      })
+      await API.post("/reviews", { orderId: eligibleOrder._id, rating, comment, })
+      setAlreadyReviewed(true)
       if (onReviewSubmitted) {
         await onReviewSubmitted();
       }
-      setAlreadyReviewed(true)
       fetchReviews()
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to submit review.")

@@ -24,12 +24,12 @@ async function sendWelcomeEmail(email, name) {
     });
 }
 
-async function sendOrderDeliveredEmail(email, name, reviewLink) {
+async function sendOrderDeliveredEmail(email, name, items, restaurantName, reviewLink) {
     return transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Your order has been delivered!",
-        html: orderDeliveredTemplate(name, reviewLink),
+        html: orderDeliveredTemplate(name, items, restaurantName, reviewLink),
     });
 }
 

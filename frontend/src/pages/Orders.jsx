@@ -59,22 +59,40 @@ export default function Orders() {
   const location = useLocation()
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await API.get("/orders/my-orders", {
-        //setOrders(res.data.data.orders)
-        params: { page, limit: 4,},})
+  const timers = orders.map((order) => {
+    const remaining =
+      60000 - (Date.now() - new Date(order.createdAt).getTime());
 
-        setOrders(res.data.data.orders)
-        setPage(res.data.data.page)
-        setTotalPages(res.data.data.totalPages)
-        setTotalOrders(res.data.data.totalOrders)
-      } catch (err) {
-        setError("Failed to load orders.")
-      } finally {
-        setLoading(false)
-      }
+    if (remaining > 0 && order.status === "pending") {
+      return setTimeout(() => {
+        setOrders((prev) => [...prev]);
+      }, remaining);
     }
+
+    return null;
+  });
+
+  return () => timers.forEach(clearTimeout);
+}, [orders]);
+
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+  try {
+    const res = await API.get("/orders/my-orders", {
+      params: { page, limit: 4 },
+    })
+    setOrders(res.data.data.orders)
+    setPage(res.data.data.page)
+    setTotalPages(res.data.data.totalPages)
+    setTotalOrders(res.data.data.totalOrders)
+
+  } catch (err) {
+    setError("Failed to load orders.")
+  } finally {
+    setLoading(false)
+  }
+}
     fetchOrders()
   }, [page])
 
@@ -89,8 +107,16 @@ export default function Orders() {
 
   const reviewOrder = (order) => {
   navigate(`/menu/${order.restaurant._id}?review=true&orderId=${order._id}`)
-}
+  }
 
+
+  const isWithinCancelWindow = (order) =>
+    Date.now() - new Date(order.createdAt).getTime() < 60000
+
+  const canCancelOrder = (order) =>
+    order.status === "pending" && isWithinCancelWindow(order)
+  
+  
   return (
     <div>
       <div className="bg-craveo-600 px-4 py-8">
@@ -179,23 +205,55 @@ export default function Orders() {
 
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
                   <span className="font-bold text-craveo-600">₹{order.totalPrice}</span>
+
                   {order.status === "pending" && (
-                    <button onClick={() => handleCancel(order._id)} className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-3 py-1.5 rounded-full hover:bg-red-50 transition">
-                      Cancel order
-                    </button>
+                    <div className="relative group">
+                      <button
+                        onClick={() => canCancelOrder(order) && handleCancel(order._id)}
+                        disabled={!canCancelOrder(order)}
+                        className={`text-sm font-medium border px-3 py-1.5 rounded-full transition ${
+                          canCancelOrder(order)
+                            ? "text-red-500 hover:text-red-700 border-red-200 hover:bg-red-50"
+                            : "text-gray-300 border-gray-200 cursor-not-allowed"
+                        }`}
+                      >
+                        Cancel order
+                      </button>
+
+                      {/* Tooltip — only shows when disabled */}
+                      {!canCancelOrder(order) && (
+                        <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-800 text-white text-l rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                          Can't cancel after 1 minute
+                          <div className="absolute top-full right-3 border-4 border-transparent border-t-gray-800" />
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
 
                 <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
-                  {order.status === "delivered" ? (
-                    <button onClick={() => reviewOrder(order)} className="text-craveo-600 hover:text-craveo-700 text-sm font-medium border border-craveo-200 px-3 py-1.5 rounded-full hover:bg-craveo-50 transition">
-                      Write a review
-                    </button>
-                  ) : (
-                    <button disabled className="text-gray-300 text-sm font-medium border border-gray-200 px-3 py-1.5 rounded-full cursor-not-allowed" title="Available after order is delivered">
-                      Write a review
-                    </button>
-                  )}
+                  {(() => {
+                    const isDelivered = order.status === "delivered"
+                    const isReviewed = order.hasReview
+                    const isDisabled = !isDelivered || isReviewed
+
+                    const tooltipMsg = isReviewed ? "Review already submitted" : !isDelivered? "Available after order is delivered" : null
+                    return (
+                      <div className="relative group">
+                        <button onClick={() => !isDisabled && reviewOrder(order)} disabled={isDisabled} className={`text-sm font-medium border px-3 py-1.5 rounded-full transition ${
+                            !isDisabled ? "text-craveo-600 hover:text-craveo-700 border-craveo-200 hover:bg-craveo-50" : "text-gray-300 border-gray-200 cursor-not-allowed"}`}>
+                          {isReviewed ? "Reviewed ✓" : "Write a review"}
+                        </button>
+
+                        {isDisabled && tooltipMsg && (
+                          <div className="absolute bottom-full right-0 mb-2 px-3 py-1.5 bg-gray-800 text-white text-l rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                            {tooltipMsg}
+                            <div className="absolute top-full right-3 border-4 border-transparent border-t-gray-800" />
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             ))}

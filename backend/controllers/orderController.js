@@ -2,6 +2,7 @@ const Order = require("../models/Order")
 const AppError = require("../utils/AppError")
 const sendResponse = require("../utils/response")
 const { sendOrderDeliveredEmail } = require("../src/services/email.service")
+const Review = require("../models/Review")
 
 // place order
 // create a new order for a logged-in user
@@ -51,17 +52,40 @@ const getMyOrders = async(req, res, next) => {
 
         // fetch orders belonging to user
         const orders = await Order.find({ user: req.user._id })
-          // replace restaurantId with name and only fetch restaurant name field
-          .populate("restaurant", "name")
-          // sort newest orders first
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limitNumber)
-        return sendResponse(res, 200, true, "Orders fetched successfully", { orders, page: pageNumber, limit: limitNumber, totalOrders, totalPages})
-    } catch (error) {
-      next(error)
-    }
+        .populate("restaurant", "name")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNumber);
+
+        // find which of these orders have already been reviewed
+        const reviews = await Review.find({
+          order: { $in: orders.map((order) => order._id) },
+        }).select("order");
+
+        const reviewedOrders = new Set(
+          reviews.map((review) => review.order.toString())
+        );
+
+        // attach review status to each order
+        const ordersWithReviewStatus = orders.map((order) => ({
+          ...order.toObject(),
+          hasReview: reviewedOrders.has(order._id.toString()),
+        }));
+
+        return sendResponse(res, 200, true, "Orders fetched successfully",
+          {
+            orders: ordersWithReviewStatus,
+            page: pageNumber,
+            limit: limitNumber,
+            totalOrders,
+            totalPages,
+          }
+        );
+      } catch(error) {
+          next(error);
+        }
 }
+
 
 // update order status
 // used for - confirmed, prepared, delivered, cancelled
@@ -72,28 +96,34 @@ const updateOrderStatus = async (req, res, next) => {
         const { status } = req.body
 
         // find order by ID
-        const order = await Order.findById(req.params.id).populate("user", "name email")
+        const order = await Order.findById(req.params.id).populate("user", "name email").populate("restaurant", "name")
 
         if(!order) {
           throw new AppError("order not found", 404)
         }
-
+        
         // only user who placed order can cancel it
         // prevents other users from modifying orders
+        // user can only cancel their own pending order within 1 minute
         if (status === "cancelled") {
-          const timeDiff = Date.now() - order.createdAt.getTime()
-          const oneMin = 60*1000
-          if (timeDiff > oneMin) {
-            throw new AppError("Orders can only be cancelled within 1 minute of placing the order", 400)
+          if (order.user._id.toString() !== req.user._id.toString()) {
+            throw new AppError("Not authorized to cancel this order.", 403);
           }
-          if (order.user.toString() !== req.user._id.toString()) {
-            throw new AppError("Not authorized to cancel this order", 403)
+
+          if (order.status.toLowerCase() !== "pending") {
+            throw new AppError("Only pending orders can be cancelled.", 400);
           }
-        } 
-        else {
-          // only admin can update other statuses
-          if (req.user.role != "admin") {
-            throw new AppError("only admins can update order status", 403)
+
+          const oneMinute = 60 * 1000;
+          const timeDiff = Date.now() - order.createdAt.getTime();
+
+          if (timeDiff > oneMinute) {
+            throw new AppError("Orders can only be cancelled within 1 minute of placing them.", 400);
+          }
+        } else {
+          // only admins can update other statuses
+          if (req.user.role !== "admin") {
+            throw new AppError("Only admins can update order status.", 403);
           }
         }
 
@@ -101,14 +131,13 @@ const updateOrderStatus = async (req, res, next) => {
         await order.save()
 
         if (order.status == "delivered") {
-        try { await sendOrderDeliveredEmail(order.user.email, order.user.name, `${process.env.FRONTEND_URL}/orders`); }
+        try { await sendOrderDeliveredEmail(order.user.email, order.user.name, order.items, order.restaurant.name, `${process.env.FRONTEND_URL}/orders`); }
         catch (err) { console.error("Failed to send order delivered email: ", err) }
-
         }
 
         return sendResponse(res, 200, true, "Order status updated", { order })
     } catch (error) {
-      next(error)
+      next(error);
     } 
 }
 
@@ -127,4 +156,3 @@ const getAllOrders = async (req, res, next) => {
 }
 
 module.exports = { placeOrder, getMyOrders, updateOrderStatus, getAllOrders }
-
