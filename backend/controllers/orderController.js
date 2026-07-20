@@ -141,15 +141,30 @@ const updateOrderStatus = async (req, res, next) => {
         }
 
         if (order.status == "delivered") {
-        try { await sendOrderDeliveredEmail(order.user.email, order.user.name, order.items, order.restaurant.name, `${process.env.FRONTEND_URL}/orders`); }
-        catch (err) { console.error("Failed to send order delivered email: ", err) }
-        }
+       try {
+        console.log("About to send order delivered email to:", order.user.email);
 
-        return sendResponse(res, 200, true, "Order status updated", { order })
+        await sendOrderDeliveredEmail(
+          order.user.email,
+          order.user.name,
+          order.items,
+          order.restaurant.name,
+          `${process.env.FRONTEND_URL}/orders`
+        );
+
+        console.log("Order delivered email sent successfully.");
+      } catch (err) {
+        console.error("Failed to send order delivered email:", err);
+      }}
+    
+
+    return sendResponse(res, 200, true, "Order status updated", { order })
     } catch (error) {
-      next(error);
-    } 
+  next(error);
 }
+    
+}
+
 
 const getAllOrders = async (req, res, next) => {
   try {
