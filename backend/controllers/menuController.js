@@ -37,7 +37,10 @@ const createMenuItem = async (req, res, next) => {
         });
 
         if (existingItem) { throw new AppError("A menu item with this name already exists for this restaurant", 400); }
-        
+        if(req.user.role==="owner"){ const restaurant=await Restaurant.findOne({ owner:req.user._id });
+            req.body.restaurantId=restaurant._id;
+        }
+
         const menuItem = await Menu.create({...req.body, name: name.trim()});
         return sendResponse(res, 201, true, "Menu item created successfully", menuItem)
     } catch (error) {
@@ -47,14 +50,15 @@ const createMenuItem = async (req, res, next) => {
 
 const updateMenuItem = async (req, res, next) => {
     try {
-        const menuItem = await Menu.findByIdAndUpdate(req.params.id, req.body, {
+        const menuItem = await Menu.findById(req.params.id);
+        if(!menuItem){ throw new AppError("Menu item not found",404);}
+        if(req.user.role === "owner"){ const restaurant = await Restaurant.findOne({ owner:req.user._id });
+            if(menuItem.restaurantId.toString()!=restaurant._id.toString()){ throw new AppError("Unauthorized",403); }
+        }
+        await Menu.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
                 runValidators: true
-            }
-        )
-        if (!menuItem) {
-            throw new AppError("Menu item not found", 404)
-        }
+            });
 
         return sendResponse(res, 200, true, "Menu item updated successfully", menuItem)
     } catch (error) {
@@ -64,16 +68,41 @@ const updateMenuItem = async (req, res, next) => {
 
 const deleteMenuItem = async (req, res, next) => {
     try {
-        const menuItem = await Menu.findByIdAndDelete(req.params.id)
-        if (!menuItem) {
-            throw new AppError("Menu item not found", 404)
+        const menuItem = await Menu.findById(req.params.id);
+        if (!menuItem) { throw new AppError("Menu item not found", 404); }
+        // owner can only delete items from their own restaurant
+        if (req.user.role === "owner") {
+            const restaurant = await Restaurant.findOne({
+                owner: req.user._id
+            });
+            if (!restaurant) { throw new AppError("Restaurant not found", 404); }
+
+            if (menuItem.restaurantId.toString() !== restaurant._id.toString()) { throw new AppError("Unauthorized", 403);}
+        }
+        await menuItem.deleteOne();
+        return sendResponse(res, 200, true, "Menu item deleted successfully");
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getRestaurantMenu = async (req,res,next)=>{
+    try{
+        let restaurantId = req.query.restaurantId;
+        if( req.user.role === "owner"){
+            const restaurant = await Restaurant.findOne({ owner:req.user._id});
+            if(!restaurant){ throw new AppError("Restaurant not found",404); }
+            restaurantId=restaurant._id;
         }
 
-        return sendResponse(res, 200, true, "Menu item deleted successfully", menuItem)
-    } catch (error) {
-        next(error)
+        const menu = await Menu.find({ restaurantId });
+
+        return sendResponse(res, 200, true, "Menu fetched", menu);
+    } catch(error){
+        next(error);
     }
 }
 
-module.exports = { getMenu, createMenuItem, updateMenuItem, deleteMenuItem }
+module.exports = { getMenu, createMenuItem, updateMenuItem, deleteMenuItem, getRestaurantMenu }
 

@@ -15,6 +15,7 @@ router.get("/test-admin", protect, admin, (req, res) => {
 
 router.get("/", getRestaurants)
 router.get("/:restaurantId", getMenu)
+router.get("/stats", protect, admin, getStats);
 
 module.exports = router
 

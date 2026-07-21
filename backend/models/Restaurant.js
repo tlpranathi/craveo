@@ -25,7 +25,13 @@ const RestaurantSchema = new mongoose.Schema({
       type: Number,
       default: 0,
       min: 0
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"User",
+      default: null
     }
+
 }, {timestamps: true}) // automatically adds 2 fields - createdAt and updatedAt
 
 module.exports = mongoose.model("Restaurant", RestaurantSchema)

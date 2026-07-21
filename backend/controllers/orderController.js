@@ -3,6 +3,7 @@ const AppError = require("../utils/AppError")
 const sendResponse = require("../utils/response")
 const { sendOrderDeliveredEmail } = require("../src/services/email.service")
 const Review = require("../models/Review")
+const Restaurant = require("../models/Restaurant");
 
 // place order
 // create a new order for a logged-in user
@@ -122,9 +123,15 @@ const updateOrderStatus = async (req, res, next) => {
           }
         } else {
           // only admins can update other statuses
-          if (req.user.role !== "admin") {
-            throw new AppError("Only admins can update order status.", 403);
-          }
+          if (req.user.role === "owner") {
+            const restaurant = await Restaurant.findOne({
+                owner: req.user._id,
+            });
+            if (!restaurant) { throw new AppError("Restaurant not found", 404); }
+            if (order.restaurant._id.toString() !== restaurant._id.toString()) {
+                throw new AppError("Unauthorized", 403);
+            }
+        }
         }
 
         order.status = status
@@ -180,4 +187,139 @@ const getAllOrders = async (req, res, next) => {
   }
 }
 
-module.exports = { placeOrder, getMyOrders, updateOrderStatus, getAllOrders }
+const getRestaurantOrders = async (req, res, next) => {
+    try {
+        const restaurant = await Restaurant.findOne({
+            owner: req.user._id
+        });
+
+        if (!restaurant) {
+            return next(new AppError("Restaurant not found", 404));
+        }
+
+        const orders = await Order.find({
+            restaurant: restaurant._id
+        })
+        .populate("user", "name email")
+        .populate("restaurant", "name")
+        .sort({ createdAt: -1 });
+
+        return sendResponse(res, 200, true, "Orders fetched", {
+            orders,
+            totalOrders: orders.length
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+const getStats = async (req, res, next) => {
+    try {
+        let orderQuery = {};
+        let averageRating = 0;
+        // owner stats
+        if (req.user.role === "owner") {
+            const restaurant = await Restaurant.findOne({
+                owner: req.user._id
+            });
+            if (!restaurant) { throw new AppError("Restaurant not found", 404); }
+
+            orderQuery.restaurant = restaurant._id;
+            averageRating = restaurant.averageRating;
+        }
+
+        // total revenue
+        const revenueResult = await Order.aggregate([
+            {
+                $match: {
+                    ...orderQuery,
+                    status: "delivered"
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: {
+                        $sum: "$totalPrice"
+                    }
+                }
+            }
+        ]);
+
+        const totalRevenue = revenueResult.length > 0 ? revenueResult[0].totalRevenue : 0;
+
+        // total orders
+        const totalOrders = await Order.countDocuments(orderQuery);
+
+        // average rating
+        if (req.user.role === "superadmin") {
+
+            const ratingResult = await Restaurant.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        averageRating: {
+                            $avg: "$averageRating"
+                        }
+                    }
+                }
+            ]);
+
+            averageRating =
+                ratingResult.length > 0
+                    ? Number(ratingResult[0].averageRating.toFixed(1))
+                    : 0;
+        }
+
+        // popular items
+        const popularItems = await Order.aggregate([
+            {
+                $match: orderQuery
+            },
+            {
+                $unwind: "$items"
+            },
+            {
+                $group: {
+                    _id: "$items.name",
+                    totalSold: {
+                        $sum: "$items.quantity"
+                    }
+                }
+            },
+            {
+                $sort: {
+                    totalSold: -1
+                }
+            },
+            {
+                $limit: 5
+            },
+            {
+                $project: {
+                    _id: 0,
+                    name: "$_id",
+                    totalSold: 1
+                }
+            }
+        ]);
+
+        return sendResponse(res, 200, true, "Stats fetched successfully", { totalRevenue, totalOrders, averageRating, popularItems});
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
+
+module.exports = { 
+  placeOrder, 
+  getMyOrders, // user
+  updateOrderStatus,
+  getAllOrders, // superadmin
+  getRestaurantOrders, // owner
+  getStats
+}
+

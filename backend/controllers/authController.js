@@ -4,7 +4,6 @@ const sendResponse = require("../utils/response") // keep API responses clean
 const AppError = require("../utils/AppError") // cleaner error handling
 const { sendWelcomeEmail } = require("../src/services/email.service.js")
 
-
 // generate JWT
 const generateToken = (userId) => {
     return jwt.sign({ id: userId }, // payload - data stored inside token
@@ -41,6 +40,7 @@ const signup = async (req, res, next) => {
         next (error)
     }
 }
+
 
 const login = async (req, res, next) => {
     try {

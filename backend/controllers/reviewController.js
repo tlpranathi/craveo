@@ -60,4 +60,23 @@ const getRestaurantReviews = async (req, res, next) => {
     next(error)
   }
 }
-module.exports = { createReview, getRestaurantReviews }
+
+const getAllReviews = async (req, res, next) => {
+    try {
+        let query = {};
+        if (req.user.role === "owner") { const restaurant = await Restaurant.findOne({ owner: req.user._id });
+            if (!restaurant) { throw new AppError("Restaurant not found",404); }
+            query.restaurant = restaurant._id;
+        }
+        const reviews = await Review.find(query)
+            .populate("user","name")
+            .populate("restaurant","name")
+            .sort({ createdAt:-1 });
+
+        return sendResponse(res,200,true,"Reviews fetched",{ reviews });
+    } catch(err){
+        next(err);
+    }
+}
+
+module.exports = { createReview, getRestaurantReviews, getAllReviews }

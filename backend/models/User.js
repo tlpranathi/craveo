@@ -12,7 +12,7 @@ const UserSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: [true, "email is required"],
+        required: [true, "Email is required"],
         unique: true, // creates unique index in mongoDB
         lowercase: true,
         trim: true,
@@ -20,12 +20,12 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String, 
-        required: [true, "password is required"],
-        minlength: [6, "password must be atleast 6 characters"],
+        required: [true, "Password is required"],
+        minlength: [6, "Password must be atleast 6 characters"],
     },
     role: {
         type: String,
-        enum: ["user", "admin"],
+        enum: ["user", "superadmin", "owner"],
         default: "user",
     },
 }, {    

@@ -2,7 +2,7 @@ const AppError = require("../utils/AppError")
 
 const admin = (req, res, next) => {
 
-    if (req.user.role !== "admin") {
+    if (req.user.role !== "superadmin") {
         return next(new AppError("Admin access required", 403))
     }
     next()
