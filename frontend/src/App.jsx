@@ -17,6 +17,12 @@ import AdminDashboard from "./pages/admin/AdminDashboard"
 import ManageRestaurants from "./pages/admin/ManageRestaurants"
 import ManageMenu from "./pages/admin/ManageMenu"
 import ManageOrders from "./pages/admin/ManageOrders"
+import OwnerRoute from "./components/OwnerRoute"
+import OwnerDashboard from "./pages/owner/OwnerDashboard"
+import OwnerOrders from "./pages/owner/OwnerOrders"
+import OwnerMenu from "./pages/owner/OwnerMenu"
+import OwnerReviews from "./pages/owner/OwnerReviews"
+
 
 function App() {
   return (
@@ -37,6 +43,11 @@ function App() {
             <Route path="restaurants/:restaurantId/menu" element={<ManageMenu />} />
             <Route path="orders" element={<ManageOrders />} />
           </Route> 
+          <Route path="/owner" element={<OwnerRoute><OwnerDashboard /></OwnerRoute>}>
+            <Route path="orders" element={<OwnerOrders />} />
+            <Route path="menu" element={<OwnerMenu />} />
+            <Route path="reviews" element={<OwnerReviews />} />
+          </Route>
           <Route path="orders" element={<ManageOrders />} />
         </Routes>
       </CartProvider>

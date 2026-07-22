@@ -68,11 +68,10 @@ export default function ManageRestaurants() {
       } else {
         await API.post("/restaurants", payload)
         // append new restaurant to existing list - no refetch needed
-        setRestaurants((prev) => [...prev, res.data.data])
+        setRestaurants((prev) => [...prev, res.data.data.restaurant])
       }
 
       setShowModal(false)
-      fetchRestaurants()
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to save restaurant.")
     } finally {

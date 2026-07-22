@@ -252,10 +252,15 @@ const getStats = async (req, res, next) => {
         // total orders
         const totalOrders = await Order.countDocuments(orderQuery);
 
-        // average rating
+        // average rating (only restaurants with reviews)
         if (req.user.role === "superadmin") {
 
             const ratingResult = await Restaurant.aggregate([
+                {
+                    $match: {
+                        numberOfReviews: { $gt: 0 }
+                    }
+                },
                 {
                     $group: {
                         _id: null,

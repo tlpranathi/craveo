@@ -6,7 +6,7 @@ const AdminRoute = ({ children }) => {
   const { user, token } = useAuth() // get user and token
 
   if (!token) return <Navigate to="/login" replace />
-  if (user?.role !== "admin") return <Navigate to="/" replace />
+  if (user?.role !== "superadmin") return <Navigate to="/" replace />
   
   // user is authenticated and has admin privileges
   // render the protected admin page 

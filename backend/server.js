@@ -15,6 +15,8 @@ const orderRoutes = require("./routes/orderRoutes")
 const userRoutes = require("./routes/userRoutes")
 const reviewRoutes = require("./routes/reviewRoutes")
 const paymentRoutes = require("./routes/paymentRoutes");
+const ownerRoutes = require("./routes/ownerRoutes")
+const adminRoutes = require("./routes/adminRoutes")
 
 const app = express()
 const httpServer = http.createServer(app) // wrap app in http server
@@ -89,6 +91,7 @@ app.use("/api/users", userRoutes)
 app.use("/api/reviews", reviewRoutes)
 app.use("/api/payment", paymentRoutes);
 app.use("/api/owner", ownerRoutes);
+app.use("/api/admin", adminRoutes)
 
 app.get("/", (req, res)=>{
     res.send("craveo API running")
