@@ -5,7 +5,7 @@ const sendResponse = require("../utils/response")
 const authLimiter = rateLimit({
     // 15-minute time window
     windowMs: 15 * 60 * 1000,
-    // max 5 requests per IP during the window
+    // max 10 requests per IP during the window
     max: 10,
     // return JSON response instead of default HTML/text
     handler: (req, res) => {
