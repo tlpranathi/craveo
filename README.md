@@ -12,6 +12,7 @@ Craveo lets users discover restaurants, place orders, pay securely online, track
 
 | Resource | Link |
 |---|---|
+| Source Code | https://github.com/tlpranathi/craveo |
 | Live App | https://craveoo.vercel.app/ |
 | Backend API | https://craveo-tkyw.onrender.com |
 
@@ -34,6 +35,7 @@ _Coming soon — screenshots and a walkthrough video will be added here._
 - Protected routes
 - Profile management
 - Password change
+- Role-based access control across three roles: customer, restaurant owner, and superadmin, enforced at the middleware layer
 
 ### Restaurant Discovery
 - Browse restaurants
@@ -59,16 +61,22 @@ _Coming soon — screenshots and a walkthrough video will be added here._
 - Dynamic average rating calculation, updated without a page reload
 - Paginated reviews
 
-### Admin Dashboard
-- Restaurant CRUD
-- Menu CRUD
-- Order management
+### Restaurant Owner Dashboard
+- Scoped to the owner's own restaurant only — ownership is re-verified server-side on every write, not trusted from the request
+- Menu CRUD, with duplicate menu item prevention per restaurant
+- Order management and status updates for their restaurant
+- View reviews for their restaurant
+- Restaurant-level analytics
+
+### Superadmin Dashboard
+- Platform-wide restaurant CRUD
+- Platform-wide menu management across all restaurants
+- Order management across the platform
 - Cloudinary image uploads
-- Role-based authorization
-- Duplicate menu item prevention per restaurant
+- Platform-wide analytics
 
 ### Notifications
-- Transactional emails via Nodemailer: welcome email on signup, order-delivered email with order and restaurant details
+- Transactional emails via Resend: welcome email on signup, order-delivered email with order and restaurant details
 
 ### Frontend Engineering
 - Auth and cart state persisted across page refresh via localStorage
@@ -101,7 +109,7 @@ _Coming soon — screenshots and a walkthrough video will be added here._
 | Payments | Razorpay |
 | Realtime | Socket.IO |
 | Image Storage | Cloudinary |
-| Emails | Nodemailer |
+| Emails | Resend |
 | Validation | express-validator |
 | Security | Helmet, Rate Limiting, CORS |
 | Deployment | Vercel, Render |
@@ -113,7 +121,7 @@ _Coming soon — screenshots and a walkthrough video will be added here._
 - Server-side Razorpay payment verification
 - Socket.IO powered real-time order updates
 - JWT authentication with protected frontend and backend routes
-- Role-based authorization for admin operations
+- Role-based authorization for owner and superadmin operations
 - Dynamic restaurant rating recalculation
 - Pagination for restaurants, orders, and reviews
 - Cloudinary image uploads
@@ -149,6 +157,8 @@ craveo/
 
 ## API Overview
 
+APIs are organized into three tiers: public/user routes (`/api/...`), owner routes (`/api/owner/...`), and superadmin routes (`/api/admin/...`).
+
 ### Authentication
 - `POST /api/auth/signup` — registers a new user account and returns a JWT
 - `POST /api/auth/login` — authenticates a user and returns a JWT
@@ -158,21 +168,30 @@ craveo/
 - `GET /api/restaurants?search=...` — searches restaurants by name or location
 - `GET /api/restaurants?cuisine=...` — filters restaurants by cuisine
 - `GET /api/restaurants/:id` — fetches a single restaurant
-- `POST /api/restaurants` (Admin) — creates a restaurant
-- `PUT /api/restaurants/:id` (Admin) — updates a restaurant
-- `DELETE /api/restaurants/:id` (Admin) — deletes a restaurant
+- `POST /api/restaurants` (Superadmin) — creates a restaurant
+- `PUT /api/restaurants/:id` (Superadmin) — updates a restaurant
+- `DELETE /api/restaurants/:id` (Superadmin) — deletes a restaurant
 
 ### Menu
 - `GET /api/menu/:restaurantId` — fetches all menu items for a restaurant
-- `POST /api/menu` (Admin) — creates a menu item
-- `PUT /api/menu/:id` (Admin) — updates a menu item
-- `DELETE /api/menu/:id` (Admin) — deletes a menu item
+- `POST /api/menu` (Superadmin) — creates a menu item for any restaurant
+- `PUT /api/menu/:id` (Superadmin) — updates any menu item
+- `DELETE /api/menu/:id` (Superadmin) — deletes any menu item
+- `GET /api/owner/menu` (Owner) — fetches menu items for the owner's restaurant
+- `POST /api/owner/menu` (Owner) — creates a menu item for the owner's restaurant
+- `PUT /api/owner/menu/:id` (Owner) — updates a menu item belonging to the owner's restaurant
+- `DELETE /api/owner/menu/:id` (Owner) — deletes a menu item belonging to the owner's restaurant
+- `GET /api/admin/menu` (Superadmin) — fetches all menu items across every restaurant
 
 ### Orders
 - `POST /api/orders` — places a new order for the logged-in user
 - `GET /api/orders/my-orders` — fetches the logged-in user's order history
-- `PATCH /api/orders/:id/status` (Admin) — updates an order's status
-- `PATCH /api/orders/:id/cancel` — cancels an order if still eligible
+- `PATCH /api/orders/:id/status` — updates an order's status; users can cancel only their own pending order within 1 minute, owners can update orders for their own restaurant, superadmins can update any order
+- `PATCH /api/orders/:id/cancel` — cancels an eligible pending order
+- `GET /api/owner/orders` (Owner) — fetches all orders for the owner's restaurant
+- `GET /api/admin/orders` (Superadmin) — fetches all orders across the platform
+- `GET /api/owner/stats` (Owner) — dashboard stats for the owner's restaurant: total revenue, total orders, average rating, top 5 popular menu items
+- `GET /api/admin/stats` (Superadmin) — platform-wide dashboard stats: total revenue, total orders, average rating, top 5 popular menu items
 
 ### Users
 - `GET /api/users/profile` — fetches the logged-in user's profile
@@ -184,6 +203,8 @@ craveo/
 - `GET /api/reviews/:restaurantId` — fetches a restaurant's reviews, paginated
 - `PUT /api/reviews/:id` — updates the logged-in user's review
 - `DELETE /api/reviews/:id` — deletes the logged-in user's review
+- `GET /api/owner/reviews` (Owner) — fetches all reviews for the owner's restaurant
+- `GET /api/admin/reviews` (Superadmin) — fetches all reviews across the platform
 
 ### Payments
 - `POST /api/payment/create-order` — creates a Razorpay order
@@ -213,8 +234,7 @@ RAZORPAY_KEY_SECRET=
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-EMAIL_USER=
-EMAIL_PASS=
+RESEND_API_KEY=
 FRONTEND_URL=http://localhost:5173
 ```
 
@@ -238,7 +258,6 @@ VITE_SOCKET_URL=http://localhost:5000
 ## Future Improvements
 
 - AI-powered review summaries
-- Restaurant owner dashboards (dedicated access for individual restaurant owners)
 - Forgot password / reset flow
 - Full email verification (current signup validation is regex-based only)
 - Coupons & loyalty system
@@ -246,4 +265,3 @@ VITE_SOCKET_URL=http://localhost:5000
 - Cart replace-item flow when adding items from a different restaurant
 - Automated testing with Jest
 - Load testing with k6
-- Analytics dashboard (restaurant-wise stats for admin)
