@@ -271,7 +271,7 @@ const Menu = () => {
                 {/* add / quantity controls */}
                 <div className="flex-shrink-0">
                   {qty === 0 ? (
-                    <button onClick={() => addToCart({...item, restaurantName: restaurantInfo?.name)} className="bg-craveo-500 hover:bg-craveo-600 text-white px-5 py-2 rounded-lg font-medium transition whitespace-nowrap">
+                    <button onClick={() => addToCart({...item, restaurantName: restaurantInfo?.name})} className="bg-craveo-500 hover:bg-craveo-600 text-white px-5 py-2 rounded-lg font-medium transition whitespace-nowrap">
                       Add
                     </button>
                   ) : (
