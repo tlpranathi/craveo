@@ -118,9 +118,10 @@ const verifyPayment = async (req, res, next) => {
         // payment verified
         const order = await Order.findById(orderId);
         if (!order) { return sendResponse( res, 404, false, "Order not found"); }
-        order.payment.status = "Paid";
+        order.payment.status = "Successful";
         order.payment.razorpayPaymentId = razorpay_payment_id;
         order.payment.razorpaySignature = razorpay_signature;
+        order.payment.paidAt = new Date() // cancel window starts from here
         await order.save();
         return sendResponse(res, 200, true, "Payment verified successfully", order);
 

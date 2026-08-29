@@ -61,9 +61,9 @@ export default function Orders() {
   
   // Add at the top of your Orders component, after your state declarations
 useEffect(() => {
-  socket.on("connect", () => console.log("✅ Socket connected:", socket.id))
-  socket.on("disconnect", () => console.log("❌ Socket disconnected"))
-  socket.on("orderStatusUpdated", (data) => console.log("📦 Status update received:", data))
+  socket.on("connect", () => console.log("Socket connected:", socket.id))
+  socket.on("disconnect", () => console.log("Socket disconnected"))
+  socket.on("orderStatusUpdated", (data) => console.log("Status update received:", data))
 
   return () => {
     socket.off("connect")
@@ -103,8 +103,9 @@ useEffect(() => {
 
   useEffect(() => {
   const timers = orders.map((order) => {
+    const windowStart = order.payment?.paidAt || order.createdAt;
     const remaining =
-      60000 - (Date.now() - new Date(order.createdAt).getTime());
+      60000 - (Date.now() - new Date(windowStart).getTime());
 
     if (remaining > 0 && order.status === "pending") {
       return setTimeout(() => {
@@ -153,8 +154,10 @@ useEffect(() => {
   }
 
 
-  const isWithinCancelWindow = (order) =>
-    Date.now() - new Date(order.createdAt).getTime() < 60000
+  const isWithinCancelWindow = (order) => {
+    const windowStart = order.payment?.paidAt || order.createdAt
+    return Date.now() - new Date(windowStart).getTime() < 60000
+  }
 
   const canCancelOrder = (order) =>
     order.status === "pending" && isWithinCancelWindow(order)
@@ -172,7 +175,8 @@ useEffect(() => {
       <div className="max-w-2xl mx-auto px-4 py-8">
         {location.state?.paymentSuccess && (
   <div className="border-l-4 border-green-500 bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm">
-    <p className="font-semibold">✅ Payment Successful!</p>
+    <p className="font-semibold">
+    Payment Successful!</p>
     <p>Your order has been placed successfully.</p>
   </div>
 )}
@@ -223,7 +227,7 @@ useEffect(() => {
 
   <span
     className={`text-xs font-semibold px-3 py-1 rounded-full ${
-      order.payment?.status === "Paid"
+      order.payment?.status === "Successful"
         ? "bg-green-100 text-green-700"
         : order.payment?.status === "Pending"
         ? "bg-yellow-100 text-yellow-700"

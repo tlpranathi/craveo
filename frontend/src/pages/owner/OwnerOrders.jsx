@@ -36,9 +36,10 @@ export default function OwnerOrders() {
     const nextStatus = STAGES[currentIndex + 1]
     if (!nextStatus) return
 
-    // owner can only confirm after 1 minute (backend enforces this too)
+    // owner can only confirm after 1 minute from payment (not backend enforced yet - frontend only)
     if (nextStatus === "confirmed") {
-      const elapsed = Date.now() - new Date(order.createdAt).getTime()
+      const windowStart = order.payment?.paidAt || order.createdAt
+      const elapsed = Date.now() - new Date(windowStart).getTime()
       if (elapsed < 60000) {
         const remaining = Math.ceil((60000 - elapsed) / 1000)
         alert(`Please wait ${remaining} seconds before confirming — giving the customer time to cancel.`)
@@ -77,7 +78,8 @@ export default function OwnerOrders() {
           const currentIndex = STAGES.indexOf(order.status)
           const nextStatus = STAGES[currentIndex + 1]
           const isFinal = order.status === "delivered" || order.status === "cancelled"
-          const elapsed = Date.now() - new Date(order.createdAt).getTime()
+          const windowStart = order.payment?.paidAt || order.createdAt
+          const elapsed = Date.now() - new Date(windowStart).getTime()
           const withinCancelWindow = elapsed < 60000
 
           return (

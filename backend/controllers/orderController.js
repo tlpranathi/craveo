@@ -116,7 +116,11 @@ const updateOrderStatus = async (req, res, next) => {
           }
 
           const oneMinute = 60 * 1000;
-          const timeDiff = Date.now() - order.createdAt.getTime();
+          // anchor to when payment was confirmed, not when order doc was created
+          // otherwise time spent in razorpay checkout eats into the customer's cancel window
+          // fall to createdAt for any preexisting order that has no paidAt on it
+          const windowStart = order.payment?.paidAt ? order.payment.paidAt.getTime() : order.createdAt.getTime();
+          const timeDiff = Date.now() - windowStart;
 
           if (timeDiff > oneMinute) {
             throw new AppError("Orders can only be cancelled within 1 minute of placing them.", 400);

@@ -45,15 +45,19 @@ const orderSchema = new mongoose.Schema ({
         enum: ["pending", "confirmed", "preparing", "delivered", "cancelled"],
         default: "pending"
     },
+    paidAt: {
+        type: Date
+    },
     payment: {
     status: {
         type: String,
-        enum: ["Pending", "Paid", "Failed", "Refunded"],
+        enum: ["Pending", "Successful", "Failed", "Refunded"],
         default: "Pending"
     },
     razorpayOrderId: String,
     razorpayPaymentId: String,
-    razorpaySignature: String
+    razorpaySignature: String,
+    paidAt: Date // set when payment is verified - cancellation window is anchored to this, not order.createdAt
 }
 }, {timestamps: true})
 
