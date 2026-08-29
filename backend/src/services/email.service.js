@@ -41,12 +41,12 @@ async function sendPasswordChangedEmail(email, name, resetLink) {
     });
 }
 
-async function sendPasswordResetEmail(email, name) {
+async function sendPasswordResetEmail(email, name, resetLink) {
     return resend.emails.send({
         from: "onboarding@resend.dev",
         to: email,
         subject: "Reset your Craveo password",
-        html: passwordResetTemplate(name),
+        html: passwordResetTemplate(name, resetLink),
     });
 }
 

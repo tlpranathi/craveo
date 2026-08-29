@@ -1,5 +1,7 @@
 const Restaurant = require("../models/Restaurant")
 const sendResponse = require("../utils/response")
+const AppError = require("../utils/AppError")
+const { escapeRegex, resolveLocationAliases } = require("../utils/searchHelpers")
 
 // GET all restaurants with optional search + cuisine filters
 // example: /api/restaurants?search=bangalore&cuisine=indian
@@ -29,14 +31,18 @@ const getRestaurants = async(req, res, next) => {
           // search filter - runs only if search query exists
           if (search) {
               // MongoDB $or operator - matches restaurants where either name matches search or location matches search
-              filter.$or = [
-                // regex search on restaurant name
-                // $options: "i" => case-insensitive
-                // "pizza" matches => Pizza Hut, PIZZA HOUSE
-                
-                { name: { $regex: search, $options: "i" }},
-                {location: {$regex: search, $options: "i" }}
+              const trimmedSearch = search.trim()
+              const safeSearch = escapeRegex(trimmedSearch)
+              const orConditions = [
+                { name: { $regex: safeSearch, $options: "i" }},
+                { location: { $regex: safeSearch, $options: "i" }},
+                { cuisine: { $regex: safeSearch, $options: "i" }},
               ]
+              const aliasMatches = resolveLocationAliases(trimmedSearch)
+              aliasMatches.forEach((canonicalLocation) => {
+                orConditions.push({ location: { $regex: escapeRegex(canonicalLocation), $options: "i" } })
+              })
+              filter.$or = orConditions
           }
 
           // cuisine filter - runs only if cuisine query exists 

@@ -8,6 +8,8 @@ import Home from "./pages/Home"
 import Cart from "./pages/Cart"
 import Login from "./pages/Login"
 import Register from "./pages/Register"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 import Restaurants from "./pages/Restaurants"
 import Menu from "./pages/Menu"
 import Orders from "./pages/Orders"
@@ -33,6 +35,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/restaurants" element={<Restaurants />} />
           <Route path="/menu/:id" element={<Menu />} />
           <Route path="/cart" element={<ProtectedRoute> <Cart /> </ProtectedRoute>}/>

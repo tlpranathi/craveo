@@ -1,9 +1,18 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
 import { useCart } from "../context/CartContext"
 import StarRating from "../components/StarRating"
 import ReviewSection from "../components/ReviewSection"
+import { Search, SlidersHorizontal } from "lucide-react"
+
+const SORT_OPTIONS = [
+  { value: "default", label: "Recommended" },
+  { value: "price-asc", label: "Price: Low to High" },
+  { value: "price-desc", label: "Price: High to Low" },
+  { value: "name-asc", label: "Name: A to Z" },
+]
+
 
 const Menu = () => {
   const { id } = useParams()
@@ -15,6 +24,12 @@ const Menu = () => {
   const [error, setError] = useState("")
   const [restaurantInfo, setRestaurantInfo] = useState(null)
   const [showReviews, setShowReviews] = useState(false)
+
+  // menu filters
+  const [menuSearch, setMenuSearch] = useState("")
+  const [sortBy, setSortBy] = useState("default")
+  const [maxPrice, setMaxPrice] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
 
   const { cartItems, addToCart, updateQuantity } = useCart()
 
@@ -28,6 +43,10 @@ const Menu = () => {
 
   // fetch menu items
   useEffect(() => {
+    // reset filters when navigating to a different restaurant's menu
+    setMenuSearch("")
+    setSortBy("default")
+    setMaxPrice("")
     const fetchMenu = async () => {
       setLoading(true)
       try {
@@ -41,6 +60,55 @@ const Menu = () => {
     }
     fetchMenu()
   }, [id])
+
+  // highest price on the menu - used as the upper bound for the price filter
+  const highestPrice = useMemo(() => {
+    if (menu.length === 0) return 0
+    return Math.max(...menu.map((item) => item.price))
+  }, [menu])
+
+  // apply search + price filter, then sort - all client-side since the
+  // full menu for a restaurant is already loaded
+  const filteredMenu = useMemo(() => {
+    let items = [...menu]
+
+    if (menuSearch.trim()) {
+     const term = menuSearch.trim().toLowerCase()
+      items = items.filter((item) =>
+        item.name.toLowerCase().includes(term) ||
+        (item.description && item.description.toLowerCase().includes(term))
+      )
+    }
+
+    if (maxPrice !== "") {
+      items = items.filter((item) => item.price <= Number(maxPrice))
+    }
+
+    switch (sortBy) {
+      case "price-asc":
+        items.sort((a, b) => a.price - b.price)
+        break
+      case "price-desc":
+        items.sort((a, b) => b.price - a.price)
+        break
+      case "name-asc":
+        items.sort((a, b) => a.name.localeCompare(b.name))
+        break
+      default:
+        break
+    }
+
+    return items
+  }, [menu, menuSearch, maxPrice, sortBy])
+
+  const filtersActive = menuSearch.trim() !== "" || maxPrice !== "" || sortBy !== "default"
+
+  const clearFilters = () => {
+    setMenuSearch("")
+    setSortBy("default")
+    setMaxPrice("")
+  }
+
 
   const fetchRestaurantInfo = async () => {
     try {
@@ -77,6 +145,61 @@ const Menu = () => {
 
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Menu</h1>
 
+      {/* filter bar */}
+      {!loading && !error && menu.length > 0 && (
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="text" placeholder="Search this menu..." value={menuSearch} onChange={(e) => setMenuSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+            </div>
+
+            <button
+              onClick={() => setShowFilters((prev) => !prev)}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium border transition whitespace-nowrap ${
+                showFilters || filtersActive
+                  ? "bg-craveo-50 border-craveo-300 text-craveo-700"
+                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <SlidersHorizontal size={16} />
+              Filters
+              {filtersActive && <span className="w-1.5 h-1.5 rounded-full bg-craveo-500" />}
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col sm:flex-row sm:items-center gap-4">
+              <div className="flex-1">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                  Sort by
+                </label>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-craveo-400">
+                  {SORT_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {highestPrice > 0 && (
+                <div className="flex-1">
+                  <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
+                    Max price: {maxPrice === "" ? `₹${highestPrice}` : `₹${maxPrice}`}
+                  </label>
+                  <input type="range" min="0" max={highestPrice} value={maxPrice === "" ? highestPrice : maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="w-full accent-craveo-500"/>
+                </div>
+              )}
+
+              {filtersActive && (
+                <button onClick={clearFilters} className="text-sm font-medium text-craveo-600 hover:text-craveo-700 whitespace-nowrap sm:self-end sm:pb-2">
+                  Clear filters
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* loading skeleton */}
       {loading && (
         <div className="space-y-4">
@@ -107,10 +230,21 @@ const Menu = () => {
         </div>
       )}
 
+      {/* no results after filtering */}
+      {!loading && !error && menu.length > 0 && filteredMenu.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-gray-700 text-lg font-medium mb-1">No items match your filters</p>
+          <p className="text-gray-400 text-sm mb-4">Try a different search term or widen your price range</p>
+          <button onClick={clearFilters} className="text-craveo-600 font-medium text-sm hover:underline">
+            Clear filters
+          </button>
+        </div>
+      )}
+
       {/* menu items */}
-      {!loading && !error && menu.length > 0 && (
+      {!loading && !error && filteredMenu.length > 0 && (
         <div className="space-y-4">
-          {menu.map((item) => {
+          {filteredMenu.map((item) => {
             const qty = getQuantity(item._id)
             return (
               <div key={item._id} className="bg-white border border-gray-200 rounded-xl p-4 flex gap-4 items-center hover:shadow-sm transition">
@@ -137,7 +271,7 @@ const Menu = () => {
                 {/* add / quantity controls */}
                 <div className="flex-shrink-0">
                   {qty === 0 ? (
-                    <button onClick={() => addToCart(item)} className="bg-craveo-500 hover:bg-craveo-600 text-white px-5 py-2 rounded-lg font-medium transition whitespace-nowrap">
+                    <button onClick={() => addToCart({...item, restaurantName: restaurantInfo?.name)} className="bg-craveo-500 hover:bg-craveo-600 text-white px-5 py-2 rounded-lg font-medium transition whitespace-nowrap">
                       Add
                     </button>
                   ) : (

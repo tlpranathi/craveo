@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import API from "../services/api"
 import { useAuth } from "../context/AuthContext"
+import { Eye, EyeOff } from "lucide-react"
 
 const Register = () => {
   const [name, setName] = useState("")
@@ -9,6 +10,7 @@ const Register = () => {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   const { login } = useAuth()
   const navigate = useNavigate()
@@ -63,7 +65,12 @@ const Register = () => {
               <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
                 Password
               </label>
-              <input type="password" placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-0 py-2 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
+              <div className="relative">
+                <input type={showPassword ? "text" : "password"} placeholder="At least 6 characters" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-0 py-2 pr-8 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
+                <button type="button" onClick={() => setShowPassword((prev) => !prev)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button

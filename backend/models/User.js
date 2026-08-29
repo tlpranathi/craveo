@@ -28,6 +28,17 @@ const UserSchema = new mongoose.Schema({
         enum: ["user", "superadmin", "owner"],
         default: "user",
     },
+    // hashed (sha256) copy of the raw reset token emailed to the user
+    // never store the raw token - if the DB leaks, a stored raw token is
+    // immediately usable to take over accounts
+    resetPasswordToken: {
+        type: String,
+        select: false,
+    },
+    resetPasswordExpires: {
+        type: Date,
+       select: false,
+    },
 }, {    
     timestamps: true, // adds createdAt and updatedAt automatically
 })

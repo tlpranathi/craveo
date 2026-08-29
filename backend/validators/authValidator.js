@@ -11,4 +11,12 @@ const loginValidator = [
     body("password").notEmpty().withMessage("Password is required"),
 ]
 
-module.exports = {signupValidator, loginValidator}
+const forgotPasswordValidator = [
+    body("email").notEmpty().withMessage("Email is required").isEmail().withMessage("Please provide a valid email"),
+]
+
+const resetPasswordValidator = [
+    body("password").notEmpty().withMessage("Password is required").isLength({min:6}).withMessage("Password must be atleast 6 characters long"),
+]
+
+module.exports = {signupValidator, loginValidator, forgotPasswordValidator, resetPasswordValidator}

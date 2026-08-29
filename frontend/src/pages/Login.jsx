@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useNavigate, Link } from "react-router-dom"
 import API from "../services/api"
 import { useAuth } from "../context/AuthContext"
+import { Eye, EyeOff } from "lucide-react"
 
 const Login = () => {
   const [email, setEmail] = useState("")
@@ -76,13 +77,20 @@ const Login = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">
-                Password
-              </label>
-              <div class="relative"></div>
-              <input type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-0 py-2 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
-              <button type="button" onClick={() => setShowPassword((prev) => !prev)} className ="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
-              </button>
+               <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-medium text-gray-500 uppercase tracking-wide">
+                  Password
+                </label>
+                <Link to="/forgot-password" className="text-xs font-medium text-craveo-600 hover:text-craveo-700">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <input type={showPassword ? "text" : "password"} placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-0 py-2 pr-8 border-0 border-b-2 border-gray-200 focus:outline-none focus:border-craveo-500 transition-colors"/>
+                <button type="button" onClick={() => setShowPassword((prev) => !prev)} aria-label={showPassword ? "Hide password" : "Show password"} className="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors">
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
 
             <button type="submit" disabled={loading} className="w-full bg-gray-900 hover:bg-craveo-600 text-white py-3.5 rounded-full font-medium transition-colors disabled:opacity-50 mt-2">
