@@ -5,6 +5,9 @@ const cors = require("cors") // cross-origin resoure sharing - allows frontend a
 const helmet = require("helmet")
 const http = require("http")   
 const { Server } = require("socket.io")
+const jwt = require("jsonwebtoken")
+const User = require("./models/User")
+const Restaurant = require("./models/Restaurant")
 
 const connectDB = require("./config/db")
 const authRoutes = require("./routes/authRoutes")
@@ -36,12 +39,44 @@ const io = new Server(httpServer, {
   }
 })
 
+// authenticate the socket itself with the same JWT used for HTTP requests - this lets us auto-join role-based rooms below without the frontend needing to know its own restaurant id or manually request access to admin data
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token
+    if (!token) {
+      return next()
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findById(decoded.id).select("-password")
+    if (user) socket.user = user
+    next()
+  } catch (err) {
+    next()
+  }
+})
+
+
 // make io accessible in controllers via req.app.get("io")
 app.set("io", io)
 
-io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`)
- 
+io.on("connection", async (socket) => {
+   console.log(`Socket connected: ${socket.id}`)
+
+  // auto-join role-based rooms so owner/admin dashboards get live updates
+  if (socket.user?.role === "superadmin") {
+    socket.join("adminRoom")
+    console.log(`Socket ${socket.id} joined adminRoom`)
+  } else if (socket.user?.role === "owner") {
+    try {
+      const restaurant = await Restaurant.findOne({ owner: socket.user._id })
+      if (restaurant) {
+        socket.join(`restaurant_${restaurant._id}`)
+        console.log(`Socket ${socket.id} joined restaurant_${restaurant._id}`)
+      }
+    } catch (err) {
+      console.error("Failed to join owner room:", err)
+    }
+  }
   // client joins their order's room
   socket.on("joinOrderRoom", (orderId) => {
     socket.join(`order_${orderId}`)

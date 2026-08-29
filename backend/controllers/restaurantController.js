@@ -16,7 +16,7 @@ const getRestaurantById = async (req, res, next) => {
 
 const getRestaurants = async(req, res, next) => {
     try {
-          const { search, cuisine, page = 1, limit = 10 } = req.query // extract query params from URL
+          const { search, cuisine, page = 1, limit = 10, sort } = req.query // extract query params from URL
           // search -> restaurant name or location
           // cuisine -> filters by cuisine type
           const pageNumber = Math.max(1, Number(page))
@@ -48,7 +48,13 @@ const getRestaurants = async(req, res, next) => {
           const totalRestaurants = await Restaurant.countDocuments(filter)
           const totalPages = Math.ceil(totalRestaurants/limitNumber)
 
-          const restaurants = await Restaurant.find(filter).skip(skip).limit(limitNumber)
+          // only allow sorting on fields that make sense, so this can't be abused to sort on arbitrary fields via query string
+          const allowedSorts = { averageRating: "averageRating", "-averageRating": "-averageRating" }
+          const sortOption = allowedSorts[sort] || undefined
+
+          let query = Restaurant.find(filter).skip(skip).limit(limitNumber)
+          if (sortOption) query = query.sort(sortOption)
+          const restaurants = await query
           console.log("Results count: ", restaurants.length)
           return sendResponse(res, 200, true, "Restaurants fetched successfully", { restaurants, page:pageNumber, limit: limitNumber, totalRestaurants, totalPages})
     } catch (error) {

@@ -30,7 +30,10 @@ export const AuthProvider = ({ children }) => {
     setToken(jwtToken)
     localStorage.setItem("craveo_user", JSON.stringify(userData))
     localStorage.setItem("craveo_token", jwtToken)
-    if (!socket.connected) socket.connect()
+    if (!socket.connected) {
+      socket.auth = { token: jwtToken }
+      socket.connect()
+    }
   }
 
   const logout = () => {

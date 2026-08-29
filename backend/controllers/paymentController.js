@@ -111,23 +111,62 @@ const verifyPayment = async (req, res, next) => {
 
         // compare signatures
         if (generatedSignature !== razorpay_signature) {
-            await Order.findByIdAndUpdate(orderId, { "payment.status": "Failed" });
+            // mark both payment AND order failed/cancelled - otherwise the order sits as "pending" forever, showing up as an active order everyone can see
+            await Order.findByIdAndUpdate(orderId, {
+                "payment.status": "Failed",
+                status: "cancelled"
+            });
             return sendResponse(res,400, false, "Payment verification failed");
         }
 
         // payment verified
-        const order = await Order.findById(orderId);
+        const order = await Order.findById(orderId).populate("user", "email name").populate("restaurant", "name");
         if (!order) { return sendResponse( res, 404, false, "Order not found"); }
         order.payment.status = "Successful";
         order.payment.razorpayPaymentId = razorpay_payment_id;
         order.payment.razorpaySignature = razorpay_signature;
         order.payment.paidAt = new Date() // cancel window starts from here
         await order.save();
-        return sendResponse(res, 200, true, "Payment verified successfully", order);
 
+        // notify owner + admin dashboards instantly - this is the point an order actually becomes real (paid)
+        const io = req.app.get("io")
+        if (io) {
+            io.to(`restaurant_${order.restaurant._id}`).emit("newOrder", { order })
+            io.to("adminRoom").emit("newOrder", { order })
+        }
+        return sendResponse(res, 200, true, "Payment verified successfully", order);
     } catch (err) {
         next(err);
     }
 };
 
-module.exports = { createOrder, verifyPayment };
+// mark a payment as failed - called when Razorpay's own "payment.failed" event fires (card declined, insufficient funds, etc.) or when the user closes the checkout without completing payment. Without this, the order sits as "pending" forever - it never reaches verifyPayment at all since Razorpay never calls our handler.
+const markPaymentFailed = async (req, res, next) => {
+    try {
+        const { orderId, reason } = req.body;
+
+        if (!orderId) { return sendResponse(res, 400, false, "orderId is required");}
+
+        const order = await Order.findById(orderId);
+        if (!order) { return sendResponse(res, 404, false, "Order not found"); }
+
+        // only the order's own user can mark it failed, and only while it's still pending -
+        // don't let this clobber an order that already succeeded or was already cancelled
+        if (order.user.toString() !== req.user._id.toString()) {
+            return sendResponse(res, 403, false, "Not authorized");
+        }
+        if (order.payment.status !== "Pending") {
+            return sendResponse(res, 200, true, "Order already resolved", order);
+        }
+
+        order.payment.status = "Failed";
+        order.status = "cancelled";
+        await order.save();
+
+        return sendResponse(res, 200, true, "Payment marked as failed", order);
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { createOrder, verifyPayment, markPaymentFailed };

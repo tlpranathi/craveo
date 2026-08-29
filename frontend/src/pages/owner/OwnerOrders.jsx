@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../../services/api"
+import socket from "../../services/socketService"
 
 const STAGES = ["pending", "confirmed", "preparing", "delivered"]
 
@@ -29,6 +30,29 @@ export default function OwnerOrders() {
       }
     }
     fetchOrders()
+  }, [])
+
+  useEffect(() => {
+    const handleNewOrder = ({ order }) => {
+      setOrders((prev) => {
+        if (prev.some((o) => o._id === order._id)) return prev
+       return [order, ...prev]
+      })
+    }
+
+    const handleStatusUpdate = ({ orderId, status }) => {
+      setOrders((prev) =>
+        prev.map((o) => (o._id === orderId ? { ...o, status } : o))
+      )
+   }
+
+    socket.on("newOrder", handleNewOrder)
+    socket.on("orderStatusUpdated", handleStatusUpdate)
+
+    return () => {
+      socket.off("newOrder", handleNewOrder)
+      socket.off("orderStatusUpdated", handleStatusUpdate)
+    }
   }, [])
 
   const advanceStatus = async (order) => {

@@ -28,10 +28,11 @@ const Home = () => {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await API.get("/restaurants")
-        // top 4 by rating for featured
-        const sorted = [...res.data.data.restaurants].sort((a, b) => b.rating - a.rating).slice(0, 4)
-        setFeatured(sorted)
+        // let the backend sort over ALL restaurants, and use the real field name
+        const res = await API.get("/restaurants", {
+          params: { sort: "-averageRating", limit: 4 }
+        })
+        setFeatured(res.data.data.restaurants)
       } catch (err) {
         // fail silently — home page shouldn't break if this fails
       } finally {
@@ -162,9 +163,9 @@ const Home = () => {
                         <Utensils></Utensils>
                       </div>
                     )}
-                    {r.rating && (
+                    {r.averageRating > 0 && (
                       <span className="absolute top-2 right-2 bg-white/95 text-gray-900 text-xs font-semibold px-2 py-0.5 rounded-full shadow-sm">
-                        ⭐ {r.rating}
+                        ⭐ {r.averageRating.toFixed(1)}
                       </span>
                     )}
                   </div>

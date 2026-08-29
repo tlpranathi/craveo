@@ -38,11 +38,16 @@ export default function Cart() {
       currency: paymentData.currency,
       order_id: paymentData.razorpayOrderId,
       modal: {
-        ondismiss: () => {
+        ondismiss: async () => {
+          // user closed the checkout without paying - mark it failed instead of leaving a phantom "pending" order in the DB that no one can ever act on
+          try {
+            await API.post("/payment/mark-failed", { orderId: paymentData.orderId});
+          } catch {
+            // best effort - not blocking ui on this
+          }
           setLoading(false);
         }
     },
-
       name: "Craveo",
       description: "Food Order",
 
@@ -72,6 +77,22 @@ export default function Cart() {
       }
     };
     const razorpay = new window.Razorpay(options);
+    // actual payment failures (card declined, insufficient funds, etc.) fire this
+    // event on the Razorpay instance itself - the checkout's own `handler` above
+    // is never called in this case, so without this listener the order silently
+    // stays "pending" forever and the customer sees no error at all
+    razorpay.on("payment.failed", async (response) => {
+     try {
+       await API.post("/payment/mark-failed", {
+         orderId: paymentData.orderId,
+         reason: response.error?.description
+       });
+     } catch {
+       // best-effort
+     }
+     setError(response.error?.description || "Payment failed. Please try again.");
+     setLoading(false);
+    });
     razorpay.open();
   } catch (err) {
     setError(err.response?.data?.message || err.message || "Failed to place order.");

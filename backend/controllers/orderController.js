@@ -141,15 +141,17 @@ const updateOrderStatus = async (req, res, next) => {
         order.status = status
         await order.save()
 
-        // emit real time updates to order room
+        //emit real time updates - order room (customer), restaurant room (owner), and adminRoom (superadmin) all need to hear about this
         const io = req.app.get("io")
         if (io) {
-          console.log(`Emitting to room: order_${order._id}`)
-          io.to(`order_${order._id}`).emit("orderStatusUpdated", {
-            orderId: order._id,
-            status: order.status,
-          })
+            const payload = { orderId: order._id, status: order.status, restaurantId: order.restaurant._id,}
+            console.log(`Emitting orderStatusUpdated for order ${order._id}`)
+            io.to(`order_${order._id}`).emit("orderStatusUpdated", payload)
+            io.to(`restaurant_${order.restaurant._id}`).emit("orderStatusUpdated", payload)
+            io.to("adminRoom").emit("orderStatusUpdated", payload)
+            
         }
+
 
         if (order.status == "delivered") {
        try {
