@@ -1,4 +1,6 @@
 const User = require("../models/User")
+const Order = require("../models/Order")
+const Review = require("../models/Review")
 const sendResponse = require("../utils/response") 
 const AppError = require("../utils/AppError")
 //const { sendPasswordResetEmail } = require("../src/services/email.service.js")
@@ -13,6 +15,35 @@ const getProfile = async(req, res, next) => {
             name: req.user.name,
             email: req.user.email,
             role: req.user.role,
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+// GET /api/users/profile/stats
+// powers the "profile statistics" cards - total orders placed, total money
+// actually spent, and how many reviews the user has written
+const getProfileStats = async (req, res, next) => {
+    try {
+        const userId = req.user._id
+
+        const totalOrders = await Order.countDocuments({ user: userId })
+
+        // "money spent" reflects orders that were actually paid for, not just
+        // placed - a pending/failed-payment order hasn't cost the user anything
+        const spentResult = await Order.aggregate([
+            { $match: { user: userId, "payment.status": "Successful" } },
+            { $group: { _id: null, totalSpent: { $sum: "$totalPrice" } } }
+        ])
+        const totalSpent = spentResult.length > 0 ? spentResult[0].totalSpent : 0
+
+        const reviewsCount = await Review.countDocuments({ user: userId })
+
+        return sendResponse(res, 200, true, "Profile statistics fetched successfully", {
+            totalOrders,
+            totalSpent,
+            reviewsCount,
         })
     } catch (error) {
         next(error)
@@ -82,4 +113,4 @@ const changePassword = async(req, res, next) => {
     }
 }
 
-module.exports = {getProfile, updateProfile, changePassword, getOwners}
+module.exports = {getProfile, updateProfile, changePassword, getOwners, getProfileStats}

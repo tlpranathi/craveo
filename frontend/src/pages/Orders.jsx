@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
 import API from "../services/api"
 import Pagination from "../components/Pagination";
+import OrderReviewForm from "../components/OrderReviewForm"
 import socket from "../services/socketService"
 
 
@@ -59,6 +60,9 @@ export default function Orders() {
   const [error, setError] = useState("")
   const navigate = useNavigate()
   const location = useLocation()
+
+  // which order's inline review form is currently expanded, if any
+  const [expandedReviewOrderId, setExpandedReviewOrderId] = useState(null)
   
   // Add at the top of your Orders component, after your state declarations
 useEffect(() => {
@@ -161,8 +165,14 @@ useEffect(() => {
     }
   }
 
-  const reviewOrder = (order) => {
-  navigate(`/menu/${order.restaurant._id}?review=true&orderId=${order._id}`)
+  const toggleReviewForm = (orderId) => {
+    setExpandedReviewOrderId((prev) => (prev === orderId ? null : orderId))
+  }
+
+  const handleReviewSubmitted = (orderId) => {
+    // mark the order as reviewed locally instead of refetching the whole list
+    setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, hasReview: true } : o)))
+    setExpandedReviewOrderId(null)
   }
 
 
@@ -309,9 +319,9 @@ useEffect(() => {
                     const tooltipMsg = isReviewed ? "Review already submitted" : !isDelivered? "Available after order is delivered" : null
                     return (
                       <div className="relative group">
-                        <button onClick={() => !isDisabled && reviewOrder(order)} disabled={isDisabled} className={`text-sm font-medium border px-3 py-1.5 rounded-full transition ${
+                        <button onClick={() => !isDisabled && toggleReviewForm(order._id)} disabled={isDisabled} className={`text-sm font-medium border px-3 py-1.5 rounded-full transition ${
                             !isDisabled ? "text-craveo-600 hover:text-craveo-700 border-craveo-200 hover:bg-craveo-50" : "text-gray-300 border-gray-200 cursor-not-allowed"}`}>
-                          {isReviewed ? "Reviewed ✓" : "Write a review"}
+                          {isReviewed ? "Reviewed ✓" : expandedReviewOrderId === order._id ? "Cancel review" : "Write a review"}
                         </button>
 
                         {isDisabled && tooltipMsg && (
@@ -324,6 +334,14 @@ useEffect(() => {
                     )
                   })()}
                 </div>
+
+                {expandedReviewOrderId === order._id && (
+                  <OrderReviewForm
+                    order={order}
+                    onSubmitted={() => handleReviewSubmitted(order._id)}
+                    onCancel={() => setExpandedReviewOrderId(null)}
+                  />
+                )}
               </div>
             ))}
           </div>

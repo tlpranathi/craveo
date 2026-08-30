@@ -30,6 +30,17 @@ const RestaurantSchema = new mongoose.Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref:"User",
       default: null
+    },
+    // cached AI-generated summary of this restaurant's reviews, plus the
+    // review count it was generated for - regenerated only when new reviews
+    // have come in since, so we don't hit the AI API on every page load
+    aiSummary: {
+      type: String,
+      default: ""
+    },
+    aiSummaryReviewCount: {
+      type: Number,
+      default: 0
     }
 
 }, {timestamps: true}) // automatically adds 2 fields - createdAt and updatedAt

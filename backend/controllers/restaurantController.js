@@ -16,6 +16,23 @@ const getRestaurantById = async (req, res, next) => {
   }
 }
 
+// GET /api/restaurants/random?limit=8
+// returns a random sample of restaurants - used on the Restaurants page's
+// initial load so browsing feels fresh instead of always showing the same
+// restaurants in the same (insertion) order
+const getRandomRestaurants = async (req, res, next) => {
+  try {
+    // clamp so this can't be abused to pull the entire collection at once
+    const limit = Math.min(Math.max(Number(req.query.limit) || 8, 1), 20)
+
+    const restaurants = await Restaurant.aggregate([{ $sample: { size: limit } }])
+
+    return sendResponse(res, 200, true, "Random restaurants fetched successfully", { restaurants })
+  } catch (error) {
+    next(error)
+  }
+}
+
 const getRestaurants = async(req, res, next) => {
     try {
           const { search, cuisine, page = 1, limit = 10, sort } = req.query // extract query params from URL
@@ -104,7 +121,7 @@ const deleteRestaurant = async(req, res, next) => {
   }
 }
 
-module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, uploadImage }
+module.exports = { getRestaurants, getRandomRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, uploadImage }
 
 // admin uploads an image file and gets back a URL to store on a restaurant/menu item
 function uploadImage(req, res, next) {

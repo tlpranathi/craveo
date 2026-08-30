@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react"
-import { useParams, useNavigate, useLocation } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import API from "../services/api"
 import { useCart } from "../context/CartContext"
 import StarRating from "../components/StarRating"
@@ -17,7 +17,6 @@ const SORT_OPTIONS = [
 const Menu = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const location = useLocation()
 
   const [menu, setMenu] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,14 +31,6 @@ const Menu = () => {
   const [showFilters, setShowFilters] = useState(false)
 
   const { cartItems, addToCart, updateQuantity } = useCart()
-
-  // check if redirected from Orders page with ?review=true
-  const autoOpenReview = new URLSearchParams(location.search).get("review") === "true"
-  const reviewOrderId = new URLSearchParams(location.search).get("orderId") 
-  // if redirected from Orders, auto-expand the review section
-  useEffect(() => {
-    if (autoOpenReview) setShowReviews(true)
-  }, [autoOpenReview])
 
   // fetch menu items
   useEffect(() => {
@@ -127,10 +118,6 @@ const Menu = () => {
     const found = cartItems.find((i) => i._id === itemId)
     return found ? found.quantity : 0
   }
-
-  const handleReviewSubmitted = async () => {
-  await fetchRestaurantInfo();
-  };
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -322,7 +309,7 @@ const Menu = () => {
 
           {/* inline expandable review section */}
           {showReviews && (
-            <ReviewSection restaurantId={id} autoOpen={autoOpenReview} reviewOrderId={reviewOrderId} onReviewSubmitted={handleReviewSubmitted}/>
+            <ReviewSection restaurantId={id} />
           )}
         </div>
       )}

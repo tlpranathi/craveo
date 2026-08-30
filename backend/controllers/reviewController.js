@@ -4,6 +4,7 @@ const Restaurant = require("../models/Restaurant")
 const AppError = require("../utils/AppError")
 const sendResponse = require("../utils/response")
 const updateRestaurantRating = require("../utils/updateRestaurantRating");
+const { generateAiReviewSummary } = require("../utils/aiReviewSummary")
 
 // POST /api/reviews
 const createReview = async (req, res, next) => {
@@ -120,4 +121,62 @@ const getAllReviews = async (req, res, next) => {
     }
 }
 
-module.exports = { createReview, getRestaurantReviews, getAllReviews }
+// GET /api/reviews/:restaurantId/summary
+// returns a short AI-written summary of a restaurant's reviews, caching it
+// on the restaurant doc so repeat page loads don't re-hit the AI API
+const getReviewSummary = async (req, res, next) => {
+  try {
+    const { restaurantId } = req.params
+
+    const restaurant = await Restaurant.findById(restaurantId)
+    if (!restaurant) throw new AppError("Restaurant not found", 404)
+
+    if (restaurant.numberOfReviews === 0) {
+      return sendResponse(res, 200, true, "Not enough reviews to summarize yet", {
+        summary: null,
+        source: "none",
+      })
+    }
+
+    // reuse the cached summary if no new reviews have come in since it was
+    // generated - avoids hitting the AI API on every page load
+    if (restaurant.aiSummary && restaurant.aiSummaryReviewCount === restaurant.numberOfReviews) {
+      return sendResponse(res, 200, true, "Review summary fetched", {
+        summary: restaurant.aiSummary,
+        source: "ai-cached",
+      })
+    }
+
+    // pull the most recent reviews with actual comments to summarize
+    const recentReviews = await Review.find({ restaurant: restaurantId, comment: { $ne: "" } })
+      .sort({ createdAt: -1 })
+      .limit(30)
+      .select("rating comment")
+
+    try {
+      const summary = await generateAiReviewSummary(restaurant.name, recentReviews)
+      restaurant.aiSummary = summary
+      restaurant.aiSummaryReviewCount = restaurant.numberOfReviews
+      await restaurant.save()
+
+      return sendResponse(res, 200, true, "Review summary generated", {
+        summary,
+        source: "ai",
+      })
+    } catch (aiError) {
+      // AI generation is a nice-to-have, not critical - fall back to a plain
+      // stats-based line instead of failing the whole request when the API
+      // key is missing or the request errors out
+      console.error("AI review summary failed, falling back:", aiError.message)
+      const fallbackSummary = `Rated ${restaurant.averageRating}/5 based on ${restaurant.numberOfReviews} review${restaurant.numberOfReviews !== 1 ? "s" : ""}.`
+      return sendResponse(res, 200, true, "Review summary fetched", {
+        summary: fallbackSummary,
+        source: "fallback",
+      })
+    }
+  } catch (error) {
+    next(error)
+  }
+}
+
+module.exports = { createReview, getRestaurantReviews, getAllReviews, getReviewSummary }

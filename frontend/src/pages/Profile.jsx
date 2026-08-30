@@ -1,9 +1,28 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../context/AuthContext"
 import API from "../services/api"
+import { ShoppingBag, Wallet, MessageSquareText } from "lucide-react"
 
 export default function Profile() {
   const { user, login, token } = useAuth()
+
+  // profile statistics
+  const [stats, setStats] = useState(null)
+  const [statsLoading, setStatsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await API.get("/users/profile/stats")
+        setStats(res.data.data)
+      } catch (err) {
+        // fail silently - stats are a nice-to-have, not core profile functionality
+      } finally {
+        setStatsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
 
   // edit profile state
   const [name, setName] = useState(user?.name || "")
@@ -77,6 +96,39 @@ export default function Profile() {
         <svg className="w-full h-3 -mt-px" viewBox="0 0 200 10" preserveAspectRatio="none">
           <path d="M0,0 L0,5 Q5,10 10,5 Q15,0 20,5 Q25,10 30,5 Q35,0 40,5 Q45,10 50,5 Q55,0 60,5 Q65,10 70,5 Q75,0 80,5 Q85,10 90,5 Q95,0 100,5 Q105,10 110,5 Q115,0 120,5 Q125,10 130,5 Q135,0 140,5 Q145,10 150,5 Q155,0 160,5 Q165,10 170,5 Q175,0 180,5 Q185,10 190,5 Q195,0 200,5 L200,0 Z" fill="#ea580c" />
         </svg>
+      </div>
+
+      {/* Profile statistics */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
+          <div className="w-9 h-9 rounded-full bg-craveo-50 text-craveo-500 flex items-center justify-center mx-auto mb-2">
+            <ShoppingBag size={18} />
+          </div>
+          <p className="text-xl font-bold text-gray-900">
+            {statsLoading ? "—" : stats?.totalOrders ?? 0}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Total orders</p>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
+          <div className="w-9 h-9 rounded-full bg-craveo-50 text-craveo-500 flex items-center justify-center mx-auto mb-2">
+            <Wallet size={18} />
+          </div>
+          <p className="text-xl font-bold text-gray-900">
+            {statsLoading ? "—" : `₹${stats?.totalSpent ?? 0}`}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Total spent</p>
+        </div>
+
+        <div className="bg-white border border-gray-200 rounded-xl p-4 text-center">
+          <div className="w-9 h-9 rounded-full bg-craveo-50 text-craveo-500 flex items-center justify-center mx-auto mb-2">
+            <MessageSquareText size={18} />
+          </div>
+          <p className="text-xl font-bold text-gray-900">
+            {statsLoading ? "—" : stats?.reviewsCount ?? 0}
+          </p>
+          <p className="text-xs text-gray-500 mt-0.5">Reviews written</p>
+        </div>
       </div>
 
       {/* Edit profile */}

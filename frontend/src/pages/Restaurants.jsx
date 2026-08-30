@@ -31,6 +31,11 @@ const Restaurants = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRestaurants, setTotalRestaurants] = useState(0)
+  // true while no search/cuisine/pagination has been applied yet - shows a
+  // random shuffle of restaurants instead of the same default-order list
+  // every time the page loads
+  const [isBrowsing, setIsBrowsing] = useState(true)
+  const [shuffleKey, setShuffleKey] = useState(0)
 
   const navigate = useNavigate()
 
@@ -40,16 +45,22 @@ const Restaurants = () => {
       setError("")
 
       try {
-        const params = { page, limit: 8,}
+        if (isBrowsing) {
+          const res = await API.get("/restaurants/random", { params: { limit: 9 } })
+          setRestaurants(res.data.data.restaurants)
+          setTotalPages(1)
+          setTotalRestaurants(res.data.data.restaurants.length)
+        } else {
+          const params = { page, limit: 8 }
+          if (search) params.search = search
+          if (cuisine) params.cuisine = cuisine
 
-        if (search) params.search = search
-        if (cuisine) params.cuisine = cuisine
+          const res = await API.get("/restaurants", { params })
 
-        const res = await API.get("/restaurants", { params })
-
-        setRestaurants(res.data.data.restaurants)
-        setTotalPages(res.data.data.totalPages)
-        setTotalRestaurants(res.data.data.totalRestaurants)
+          setRestaurants(res.data.data.restaurants)
+          setTotalPages(res.data.data.totalPages)
+          setTotalRestaurants(res.data.data.totalRestaurants)
+        }
       } catch (err) {
         setError("Failed to load restaurants. Please try again.")
       } finally {
@@ -57,9 +68,9 @@ const Restaurants = () => {
       }
 }
 
-    const debounce = setTimeout(fetchRestaurants, 400)
+    const debounce = setTimeout(fetchRestaurants, isBrowsing ? 0 : 400)
     return () => clearTimeout(debounce)
-  }, [search, cuisine, page])
+  }, [search, cuisine, page, isBrowsing, shuffleKey])
 
   return (
     <div>
@@ -76,8 +87,8 @@ const Restaurants = () => {
 
           {/* Search bar embedded in hero */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-2xl">
-            <input type="text" placeholder="Search by name or location..." value={search} onChange={(e) => {setSearch(e.target.value); setPage(1)}} className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"/>
-            <select value={cuisine} onChange={(e) => {setCuisine(e.target.value); setPage(1)}} className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm">
+            <input type="text" placeholder="Search by name or location..." value={search} onChange={(e) => {setSearch(e.target.value); setPage(1); setIsBrowsing(false)}} className="flex-1 px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white shadow-sm"/>
+            <select value={cuisine} onChange={(e) => {setCuisine(e.target.value); setPage(1); setIsBrowsing(false)}} className="px-4 py-3 rounded-full border-0 focus:outline-none focus:ring-2 focus:ring-white bg-white shadow-sm">
               {CUISINES.map((c) => (
                 <option key={c} value={c === "All" ? "" : c}>
                   {c}
@@ -86,7 +97,7 @@ const Restaurants = () => {
             </select>
 
             {(search || cuisine) && (
-              <button onClick={() => { setSearch(""); setCuisine(""); setPage(1) }} className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap">
+              <button onClick={() => { setSearch(""); setCuisine(""); setPage(1); setIsBrowsing(true) }} className="px-4 py-3 rounded-full bg-craveo-700 text-white hover:bg-craveo-800 transition whitespace-nowrap">
                 Clear
               </button>
             )}
@@ -98,9 +109,25 @@ const Restaurants = () => {
       <div className="max-w-6xl mx-auto px-4 py-8">
 
         {!loading && !error && restaurants.length > 0 && (
-          <p className="text-gray-500 text-sm mb-5">
-            <span className="text-craveo-600 font-semibold">{totalRestaurants}</span> restaurants found
-          </p>
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-gray-500 text-sm">
+              {isBrowsing ? (
+                "Discover something new"
+              ) : (
+                <>
+                  <span className="text-craveo-600 font-semibold">{totalRestaurants}</span> restaurants found
+                </>
+              )}
+            </p>
+            {isBrowsing && (
+              <button
+                onClick={() => setShuffleKey((k) => k + 1)}
+                className="text-craveo-600 font-medium text-sm hover:underline whitespace-nowrap"
+              >
+                🎲 Shuffle
+              </button>
+            )}
+          </div>
         )}
 
         {/* loading skeleton */}
@@ -181,7 +208,7 @@ const Restaurants = () => {
             ))}
           </div>
         )}
-        {!loading && !error && restaurants.length > 0 && (
+        {!loading && !error && restaurants.length > 0 && !isBrowsing && (
         <Pagination page={page} totalPages={totalPages} onPageChange={(newPage) => {setPage(newPage) 
           window.scrollTo({
             top: 0,
