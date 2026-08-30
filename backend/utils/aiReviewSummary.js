@@ -6,7 +6,7 @@
 // fails. Groq's free tier is generous enough for this use case and needs no
 // billing card, unlike OpenAI's API.
 const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-const GROQ_MODEL = "llama-3.1-8b-instant"
+const GROQ_MODEL = "openai/gpt-oss-20b"
 
 const generateAiReviewSummary = async (restaurantName, reviews) => {
     const apiKey = process.env.GROQ_API_KEY
