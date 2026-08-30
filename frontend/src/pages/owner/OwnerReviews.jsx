@@ -1,17 +1,30 @@
 import { useState, useEffect } from "react"
 import API from "../../services/api"
 import StarRating from "../../components/StarRating"
+import Pagination from "../../components/Pagination"
+
+const PAGE_SIZE = 10
 
 export default function OwnerReviews() {
   const [reviews, setReviews] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalReviews, setTotalReviews] = useState(0)
+  // matches the shape returned by GET /api/owner/reviews: { avgRating, count, breakdown: {1..5} }
+  const [stats, setStats] = useState({ avgRating: 0, count: 0, breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
   useEffect(() => {
     const fetchReviews = async () => {
+      setLoading(true)
       try {
-        const res = await API.get("/owner/reviews")
-        setReviews(res.data.data.reviews)
+        const res = await API.get("/owner/reviews", { params: { page, limit: PAGE_SIZE } })
+        const { reviews, totalReviews, totalPages, stats } = res.data.data
+        setReviews(reviews)
+        setTotalReviews(totalReviews)
+        setTotalPages(totalPages)
+        if (stats) setStats(stats)
       } catch (err) {
         setError("Failed to load reviews.")
       } finally {
@@ -19,28 +32,51 @@ export default function OwnerReviews() {
       }
     }
     fetchReviews()
-  }, [])
+  }, [page])
 
   if (loading) return <p className="text-gray-500 text-sm">Loading reviews...</p>
   if (error) return <p className="text-red-600 text-sm">{error}</p>
-
-  const avg = reviews.length
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : null
 
   return (
     <div>
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-lg font-semibold text-gray-900">
-          Reviews <span className="text-gray-400 font-normal text-sm ml-1">({reviews.length})</span>
+          Reviews <span className="text-gray-400 font-normal text-sm ml-1">({totalReviews})</span>
         </h2>
-        {avg && (
+        {stats.count > 0 && (
           <div className="flex items-center gap-2 bg-craveo-50 px-3 py-1.5 rounded-full">
-            <StarRating value={Math.round(avg * 2) / 2} mode="display" size="text-sm" />
-            <span className="text-craveo-700 font-semibold text-sm">{avg} avg</span>
+            <StarRating value={Math.round(stats.avgRating * 2) / 2} mode="display" size="text-sm" />
+            <span className="text-craveo-700 font-semibold text-sm">{stats.avgRating} avg</span>
           </div>
         )}
       </div>
+
+      {/* rating breakdown - computed across ALL reviews on the backend, not just this page */}
+      {stats.count > 0 && (
+        <div className="bg-white border border-gray-200 rounded-xl p-4 mb-5">
+          <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
+            Rating breakdown
+          </h3>
+          <div className="space-y-1.5">
+            {[5, 4, 3, 2, 1].map((star) => {
+              const count = stats.breakdown[star] || 0
+              const pct = stats.count > 0 ? Math.round((count / stats.count) * 100) : 0
+              return (
+                <div key={star} className="flex items-center gap-2 text-xs">
+                  <span className="w-10 text-gray-500 flex-shrink-0">{star} star</span>
+                  <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-craveo-400 rounded-full transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="w-8 text-gray-400 text-right flex-shrink-0">{count}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {reviews.length === 0 && (
         <p className="text-center text-gray-400 py-8">No reviews yet.</p>
@@ -67,6 +103,8 @@ export default function OwnerReviews() {
           </div>
         ))}
       </div>
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }
