@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react"
 import API from "../../services/api"
 import socket from "../../services/socketService"
+import Pagination from "../../components/Pagination"
 
 const STAGES = ["pending", "confirmed", "preparing", "delivered"]
 
@@ -14,6 +15,9 @@ const statusStyles = {
 
 export default function ManageOrders() {
   const [orders, setOrders] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalOrders, setTotalOrders] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [updatingId, setUpdatingId] = useState(null)
@@ -22,8 +26,10 @@ export default function ManageOrders() {
     setLoading(true)
     try {
       // admin needs ALL orders, not just "my orders"
-      const res = await API.get("/orders")
+      const res = await API.get("/orders", { params: { page, limit: 10 } })
       setOrders(res.data.data.orders)
+      setTotalPages(res.data.data.totalPages)
+      setTotalOrders(res.data.data.totalOrders)
     } catch (err) {
       setError("Failed to load orders.")
     } finally {
@@ -31,13 +37,18 @@ export default function ManageOrders() {
     }
   }
 
-  useEffect(() => { fetchOrders() }, [])
+  useEffect(() => { fetchOrders() }, [page])
 
   useEffect(() => {
     const handleNewOrder = ({ order }) => {
+      // only splice a live new order into the list while viewing page 1 -
+      // inserting it on any other page would misrepresent what that page
+      // actually contains once you refresh
+      if (page !== 1) return
+
       setOrders((prev) => {
         if (prev.some((o) => o._id === order._id)) return prev
-        return [order, ...prev]
+        return [order, ...prev].slice(0, 10)
       })
     }
 
@@ -54,7 +65,7 @@ export default function ManageOrders() {
       socket.off("newOrder", handleNewOrder)
       socket.off("orderStatusUpdated", handleStatusUpdate)
     }
-  }, [])
+  }, [page])
 
 
   const advanceStatus = async (order) => {
@@ -77,7 +88,10 @@ export default function ManageOrders() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-900 mb-5">All orders</h2>
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-lg font-semibold text-gray-900">All orders</h2>
+        <span className="text-sm text-gray-400">{totalOrders} total</span>
+      </div>
 
       {loading && <p className="text-gray-500 text-sm">Loading...</p>}
       {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -123,6 +137,7 @@ export default function ManageOrders() {
           )}
         </div>
       )}
+    <Pagination page={page} totalPages={totalPages} onPageChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }) }} />
     </div>
   )
 }

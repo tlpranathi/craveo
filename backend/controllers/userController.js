@@ -19,6 +19,16 @@ const getProfile = async(req, res, next) => {
     }
 }
 
+// GET /api/users/... admin only: list users with role "owner", for assigning restaurant ownership in the admin panel
+const getOwners = async (req, res, next) => {
+    try {
+        const owners = await User.find({ role: "owner" }).select("name email")
+       return sendResponse(res, 200, true, "Owners fetched successfully", { owners })
+    } catch (error) {
+        next(error)
+    }
+}
+
 // PUT /api/users/profile
 const updateProfile = async(req, res, next) => {
     try {
@@ -72,4 +82,4 @@ const changePassword = async(req, res, next) => {
     }
 }
 
-module.exports = {getProfile, updateProfile, changePassword}
+module.exports = {getProfile, updateProfile, changePassword, getOwners}

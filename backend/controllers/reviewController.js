@@ -68,13 +68,54 @@ const getAllReviews = async (req, res, next) => {
             if (!restaurant) { throw new AppError("Restaurant not found",404); }
             query.restaurant = restaurant._id;
         }
+        const { page = 1, limit = 10 } = req.query
+        const pageNumber = Math.max(1, Number(page))
+        const limitNumber = Math.max(1, Number(limit))
+        const skip = (pageNumber - 1) * limitNumber
+        const totalReviews = await Review.countDocuments(query)
+        const totalPages = Math.max(0, Math.ceil(totalReviews / limitNumber))
+
         const reviews = await Review.find(query)
             .populate("user","name")
             .populate("restaurant","name")
-            .sort({ createdAt:-1 });
+            .sort({ createdAt:-1 })
+            .skip(skip)
+            .limit(limitNumber);
+        
+         // stats need to cover ALL matching reviews, not just this page - otherwise the average/breakdown would shift depending on which page you're on
+        const statsAgg = await Review.aggregate([
+          { $match: query },
+          {
+            $group: {
+              _id: null,
+              avgRating: { $avg: "$rating" },
+              count: { $sum: 1 },
+              // half-star buckets round down to the nearest whole star for the breakdown
+              star5: { $sum: { $cond: [{ $gte: ["$rating", 4.5] }, 1, 0] } },
+              star4: { $sum: { $cond: [{ $and: [{ $gte: ["$rating", 3.5] }, { $lt: ["$rating", 4.5] }] }, 1, 0] } },
+              star3: { $sum: { $cond: [{ $and: [{ $gte: ["$rating", 2.5] }, { $lt: ["$rating", 3.5] }] }, 1, 0] } },
+              star2: { $sum: { $cond: [{ $and: [{ $gte: ["$rating", 1.5] }, { $lt: ["$rating", 2.5] }] }, 1, 0] } },
+              star1: { $sum: { $cond: [{ $lt: ["$rating", 1.5] }, 1, 0] } },
+            }
+          }
+        ])
 
-        return sendResponse(res,200,true,"Reviews fetched",{ reviews });
-    } catch(err){
+        const stats = statsAgg[0]
+          ? {
+             avgRating: Math.round(statsAgg[0].avgRating * 10) / 10,
+              count: statsAgg[0].count,
+              breakdown: {
+                5: statsAgg[0].star5,
+                4: statsAgg[0].star4,
+                3: statsAgg[0].star3,
+                2: statsAgg[0].star2,
+                1: statsAgg[0].star1,
+              }
+            }
+          : { avgRating: 0, count: 0, breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } }
+
+        return sendResponse(res,200,true,"Reviews fetched",{ reviews, stats, page: pageNumber, limit: limitNumber, totalReviews, totalPages });   
+      } catch(err){
         next(err);
     }
 }

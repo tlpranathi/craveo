@@ -3,7 +3,8 @@ require("dotenv").config() // loads variables from .env to process.env
 const express = require("express")
 const cors = require("cors") // cross-origin resoure sharing - allows frontend and backend on different ports/domains to communicate
 const helmet = require("helmet")
-const http = require("http")   
+const http = require("http")  
+const path = require("path") 
 const { Server } = require("socket.io")
 const jwt = require("jsonwebtoken")
 const User = require("./models/User")
@@ -116,6 +117,11 @@ app.use(
     credentials: true,
   })
 );
+
+// serve uploaded images - explicitly mark cross-origin so the frontend (deployed on a different domain) isn't blocked from loading them by helmet's default same-origin Cross-Origin-Resource-Policy header
+app.use("/uploads", express.static(path.join(__dirname, "uploads"), {
+  setHeaders: (res) => res.set("Cross-Origin-Resource-Policy", "cross-origin")
+}))
 
 // routes
 app.use("/api/auth", authRoutes)

@@ -51,6 +51,7 @@ function StatusTrail({ status }) {
 
 export default function Orders() {
   const [orders, setOrders] = useState([])
+  const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalOrders, setTotalOrders] = useState(0)
@@ -119,12 +120,23 @@ useEffect(() => {
   return () => timers.forEach(clearTimeout);
 }, [orders]);
 
+  // debounce the search input so we're not firing a request per keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState("")
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  // reset to page 1 whenever the search term actually changes (post-debounce) - otherwise you could land on a page number that doesn't exist for the new results
+  useEffect(() => {
+    setPage(1)
+  }, [debouncedSearch])
 
   useEffect(() => {
     const fetchOrders = async () => {
   try {
     const res = await API.get("/orders/my-orders", {
-      params: { page, limit: 4 },
+      params: { page, limit: 4, search: debouncedSearch || undefined },
     })
     setOrders(res.data.data.orders)
     setPage(res.data.data.page)
@@ -138,7 +150,7 @@ useEffect(() => {
   }
 }
     fetchOrders()
-  }, [page])
+  }, [page, debouncedSearch])
 
   const handleCancel = async (orderId) => {
     try {
@@ -169,6 +181,7 @@ useEffect(() => {
         <div className="max-w-2xl mx-auto">
           <h1 className="text-2xl font-bold text-white">My Orders</h1>
           <p className="text-craveo-100 text-sm">{totalOrders} order{totalOrders !== 1 ? "s" : ""} placed</p>
+          <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search by restaurant name..." className="mt-4 w-full px-4 py-2.5 rounded-lg border-0 focus:outline-none focus:ring-2 focus:ring-white/50 text-sm"/>
         </div>
       </div>
 
@@ -203,8 +216,17 @@ useEffect(() => {
             <div className="w-20 h-20 bg-craveo-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
               📦
             </div>
-            <p className="text-gray-700 text-lg font-medium mb-1">No orders yet</p>
-            <p className="text-gray-400 text-sm mb-6">Your order history will show up here</p>
+            {debouncedSearch ? (
+              <>
+                <p className="text-gray-700 text-lg font-medium mb-1">No orders match "{debouncedSearch}"</p>
+                <p className="text-gray-400 text-sm mb-6">Try a different restaurant name</p>
+              </>
+            ) : (
+              <>
+                <p className="text-gray-700 text-lg font-medium mb-1">No orders yet</p>
+                <p className="text-gray-400 text-sm mb-6">Your order history will show up here</p>
+              </>
+            )}
             <button onClick={() => navigate("/restaurants")} className="bg-craveo-500 hover:bg-craveo-600 text-white px-6 py-3 rounded-full font-medium transition">
               Order now
             </button>

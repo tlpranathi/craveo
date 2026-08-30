@@ -102,5 +102,19 @@ const deleteRestaurant = async(req, res, next) => {
   }
 }
 
-module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById }
+module.exports = { getRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, uploadImage }
 
+// admin uploads an image file and gets back a URL to store on a restaurant/menu item
+function uploadImage(req, res, next) {
+  try {
+    if (!req.file) {
+      return sendResponse(res, 400, false, "No image file provided")
+    }
+    // BACKEND_URL should be set in env for production so the returned URL is absolute and actually loads from the deployed backend, not localhost
+    const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`
+    const url = `${baseUrl}/uploads/${req.file.filename}`
+    return sendResponse(res, 200, true, "Image uploaded successfully", { url })
+  } catch (error) {
+    next(error)
+  }
+}

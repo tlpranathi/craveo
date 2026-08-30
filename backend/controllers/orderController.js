@@ -40,19 +40,32 @@ const placeOrder = async (req, res, next) => {
 const getMyOrders = async(req, res, next) => {
     try {
         // pagination query params
-        const { page = 1, limit = 10 } = req.query
+        const { page = 1, limit = 10, search } = req.query
         // valid positive numbers
         const pageNumber = Math.max(1, Number(page))
         const limitNumber = Math.max(1, Number(limit))
         // number of documents to skip
         const skip = (pageNumber-1)*limitNumber
+
+        const filter = { user: req.user._id }
+
+        // search by restaurant name - restaurant is a separate collection, so find
+        // matching restaurant ids first, then filter this user's orders by those ids
+        if (search) {
+          const matchingRestaurants = await Restaurant.find({
+            name: { $regex: search, $options: "i" }
+          }).select("_id")
+          filter.restaurant = { $in: matchingRestaurants.map((r) => r._id) }
+        }
+
         // count total orders belonging to logged-in user
-        const totalOrders = await Order.countDocuments({user: req.user._id})
+        const totalOrders = await Order.countDocuments(filter)
+
         // calculate total pages
         const totalPages = Math.max(0, Math.ceil(totalOrders / limitNumber))
 
         // fetch orders belonging to user
-        const orders = await Order.find({ user: req.user._id })
+        const orders = await Order.find(filter)
         .populate("restaurant", "name")
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -181,13 +194,21 @@ const updateOrderStatus = async (req, res, next) => {
 
 const getAllOrders = async (req, res, next) => {
   try {
+    const { page = 1, limit = 10 } = req.query
+    const pageNumber = Math.max(1, Number(page))
+    const limitNumber = Math.max(1, Number(limit))
+    const skip = (pageNumber - 1) * limitNumber
+
     const totalOrders = await Order.countDocuments();
+    const totalPages = Math.max(0, Math.ceil(totalOrders / limitNumber))
     const orders = await Order.find()
       .populate("user", "name email")
       .populate("restaurant", "name")
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNumber);
 
-    return sendResponse(res, 200, true, "All orders fetched", { orders, totalOrders })
+    return sendResponse(res, 200, true, "All orders fetched", { orders, page:pageNumber, limit:limitNumber, totalOrders, totalPages })
   } catch (error) {
     next(error)
   }
