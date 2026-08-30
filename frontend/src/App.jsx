@@ -52,7 +52,6 @@ function App() {
             <Route path="menu" element={<OwnerMenu />} />
             <Route path="reviews" element={<OwnerReviews />} />
           </Route>
-          <Route path="orders" element={<ManageOrders />} />
         </Routes>
       </CartProvider>
     </AuthProvider>

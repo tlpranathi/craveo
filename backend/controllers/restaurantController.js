@@ -8,7 +8,7 @@ const { escapeRegex, resolveLocationAliases } = require("../utils/searchHelpers"
 
 const getRestaurantById = async (req, res, next) => {
   try {
-    const restaurant = await Restaurant.findById(req.params.id)
+    const restaurant = await Restaurant.findById(req.params.id).populate("owner", "name email")
     if (!restaurant) throw new AppError("Restaurant not found", 404)
     return sendResponse(res, 200, true, "Restaurant fetched", restaurant)
   } catch (error) {
@@ -58,7 +58,9 @@ const getRestaurants = async(req, res, next) => {
           const allowedSorts = { averageRating: "averageRating", "-averageRating": "-averageRating" }
           const sortOption = allowedSorts[sort] || undefined
 
-          let query = Restaurant.find(filter).skip(skip).limit(limitNumber)
+          // populate owner so the admin list can show who owns each restaurant
+          // instead of just a raw ObjectId
+          let query = Restaurant.find(filter).populate("owner", "name email").skip(skip).limit(limitNumber)
           if (sortOption) query = query.sort(sortOption)
           const restaurants = await query
           console.log("Results count: ", restaurants.length)

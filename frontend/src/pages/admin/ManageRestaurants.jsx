@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import API from "../../services/api"
+import Pagination from "../../components/Pagination"
 
 const emptyForm = { name: "", location: "", cuisine: "", rating: "", image: "", owner: "" }
+const PAGE_SIZE = 10
 
 export default function ManageRestaurants() {
   const [restaurants, setRestaurants] = useState([])
   const [owners, setOwners] = useState([])
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalRestaurants, setTotalRestaurants] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
   const [initialLoad, setInitialLoad] = useState(true) // separate flag for initial load
@@ -22,8 +27,10 @@ export default function ManageRestaurants() {
   const fetchRestaurants = async () => {
     if (initialLoad) setLoading(true) // only show skeleton on first load
     try { 
-      const res = await API.get("/restaurants")
+      const res = await API.get("/restaurants", { params: { page, limit: PAGE_SIZE } })
       setRestaurants(res.data.data.restaurants)
+      setTotalPages(res.data.data.totalPages)
+      setTotalRestaurants(res.data.data.totalRestaurants)
     } catch (err) {
       setError("Failed to load restaurants.")
     } finally {
@@ -41,7 +48,8 @@ export default function ManageRestaurants() {
     }
   }
 
-  useEffect(() => { fetchRestaurants(); fetchOwners() }, [])
+  useEffect(() => { fetchRestaurants() }, [page])
+  useEffect(() => { fetchOwners() }, [])
 
   const openCreate = () => {
     setEditingId(null)
@@ -96,17 +104,14 @@ export default function ManageRestaurants() {
 
       if (editingId) {
         await API.put(`/restaurants/${editingId}`, payload)
-        // update just row in state - no refetch needed
-        setRestaurants((prev) =>
-          prev.map((r) => (r._id === editingId? {...r, ...payload, owner: owners.find(o => o._id === form.owner) || null} : r))
-        )
       } else {
-        const res = await API.post("/restaurants", payload)
-        // append new restaurant to existing list - no refetch needed
-        setRestaurants((prev) => [...prev, res.data.data.restaurant])
+        await API.post("/restaurants", payload)
       }
 
       setShowModal(false)
+      // refetch so pagination/counts stay accurate and the owner name renders
+      // correctly either way, instead of patching the list in place
+      fetchRestaurants()
     } catch (err) {
       setFormError(err.response?.data?.message || "Failed to save restaurant.")
     } finally {
@@ -118,7 +123,13 @@ export default function ManageRestaurants() {
     if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return
     try {
       await API.delete(`/restaurants/${id}`)
-      setRestaurants((prev) => prev.filter((r) => r._id !== id))
+      // if that was the last item on this page, step back a page so we don't
+      // land on an empty page
+      if (restaurants.length === 1 && page > 1) {
+        setPage((p) => p - 1)
+      } else {
+        fetchRestaurants()
+      }
     } catch (err) {
       alert(err.response?.data?.message || "Failed to delete restaurant.")
     }
@@ -128,7 +139,7 @@ export default function ManageRestaurants() {
     <div>
       <div className="flex justify-between items-center mb-5">
       <h2 className="text-lg font-semibold text-gray-900">
-        Restaurants
+        Restaurants <span className="text-gray-400 font-normal text-sm ml-1">({totalRestaurants})</span>
       </h2>
         <button
           onClick={openCreate}
@@ -189,6 +200,10 @@ export default function ManageRestaurants() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!loading && !error && (
+        <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
       )}
 
       {/*create/edit modal*/}

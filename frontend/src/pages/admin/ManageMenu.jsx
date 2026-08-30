@@ -17,6 +17,7 @@ export default function ManageMenu() {
   const [form, setForm] = useState(emptyForm)
   const [saving, setSaving] = useState(false)
   const [formError, setFormError] = useState("")
+  const [uploading, setUploading] = useState(false)
 
   const fetchMenu = async () => {
     setLoading(true)
@@ -49,6 +50,25 @@ export default function ManageMenu() {
     })
     setFormError("")
     setShowModal(true)
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    setFormError("")
+    try {
+      const formData = new FormData()
+      formData.append("image", file)
+      // reuses the same upload endpoint the restaurant form uses - don't set
+      // Content-Type manually, the browser needs to add its own multipart boundary
+      const res = await API.post("/restaurants/upload", formData)
+      setForm((prev) => ({ ...prev, image: res.data.data.url }))
+    } catch (err) {
+      setFormError(err.response?.data?.message || "Failed to upload image.")
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -168,12 +188,22 @@ export default function ManageMenu() {
               <input type="text" placeholder="Item name" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <input type="number" placeholder="Price" required min="0" value={form.price} step="0.01" onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
               <textarea placeholder="Description" rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
-              <input type="text" placeholder="Image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400"/>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">Photo</label>
+                {form.image && (
+                  <img src={form.image} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2 border border-gray-200" />
+                )}
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={handleImageUpload} disabled={uploading} className="w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-craveo-50 file:text-craveo-700 file:font-medium hover:file:bg-craveo-100"/>
+                {uploading && <p className="text-xs text-gray-400 mt-1">Uploading...</p>}
+                <input type="text" placeholder="or paste an image URL" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} className="w-full mt-2 px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-craveo-400 text-sm"/>
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-lg font-medium hover:bg-gray-50 transition">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving} className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50">
+                <button type="submit" disabled={saving || uploading} className="flex-1 bg-craveo-500 hover:bg-craveo-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50">
                   {saving ? "Saving..." : "Save"}
                 </button>
               </div>
