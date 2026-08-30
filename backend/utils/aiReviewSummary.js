@@ -1,14 +1,17 @@
 // generates a short natural-language summary of a restaurant's reviews using
-// OpenAI's chat completions API. Requires OPENAI_API_KEY - callers should
-// catch and fall back to a simpler summary if this throws, since an AI
-// summary is a nice-to-have and shouldn't block the reviews endpoint if the
-// key is missing or the request fails.
-const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+// Groq's chat completions API (OpenAI-compatible request/response shape).
+// Requires GROQ_API_KEY - callers should catch and fall back to a simpler
+// summary if this throws, since an AI summary is a nice-to-have and
+// shouldn't block the reviews endpoint if the key is missing or the request
+// fails. Groq's free tier is generous enough for this use case and needs no
+// billing card, unlike OpenAI's API.
+const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+const GROQ_MODEL = "llama-3.1-8b-instant"
 
 const generateAiReviewSummary = async (restaurantName, reviews) => {
-    const apiKey = process.env.OPENAI_API_KEY
+    const apiKey = process.env.GROQ_API_KEY
     if (!apiKey) {
-        throw new Error("OPENAI_API_KEY is not configured")
+        throw new Error("GROQ_API_KEY is not configured")
     }
 
     // only send the rating + comment text - keep the payload small and never
@@ -28,14 +31,14 @@ const generateAiReviewSummary = async (restaurantName, reviews) => {
 Reviews:
 ${reviewLines}`
 
-    const response = await fetch(OPENAI_API_URL, {
+    const response = await fetch(GROQ_API_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-            model: "gpt-4o-mini",
+            model: GROQ_MODEL,
             messages: [{ role: "user", content: prompt }],
             temperature: 0.4,
             max_tokens: 150,
@@ -44,14 +47,14 @@ ${reviewLines}`
 
     if (!response.ok) {
         const errText = await response.text()
-        throw new Error(`OpenAI request failed: ${response.status} ${errText}`)
+        throw new Error(`Groq request failed: ${response.status} ${errText}`)
     }
 
     const data = await response.json()
     const summary = data.choices?.[0]?.message?.content?.trim()
 
     if (!summary) {
-        throw new Error("OpenAI returned an empty summary")
+        throw new Error("Groq returned an empty summary")
     }
 
     return summary
