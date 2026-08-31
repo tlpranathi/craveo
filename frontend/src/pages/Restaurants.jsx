@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import API from "../services/api"
-import { Search } from "lucide-react"
+import { Search, Dices } from "lucide-react"
 import Pagination from "../components/Pagination";
 
 const CUISINES = ['All', 
@@ -120,11 +120,8 @@ const Restaurants = () => {
               )}
             </p>
             {isBrowsing && (
-              <button
-                onClick={() => setShuffleKey((k) => k + 1)}
-                className="text-craveo-600 font-medium text-sm hover:underline whitespace-nowrap"
-              >
-                🎲 Shuffle
+              <button onClick={() => setShuffleKey((k) => k + 1)} className="text-craveo-600 font-medium text-sm hover:underline whitespace-nowrap">
+                <Dices /> Shuffle
               </button>
             )}
           </div>
