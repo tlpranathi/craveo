@@ -35,5 +35,9 @@ const ReviewSchema = new mongoose.Schema({
     }
 }, {timestamps: true})
 
+// getRestaurantReviews / getAllReviews / getReviewSummary: filter by
+// restaurant, sort by createdAt desc
+ReviewSchema.index({ restaurant: 1, createdAt: -1 })
+
 module.exports = mongoose.model("Review", ReviewSchema)
 

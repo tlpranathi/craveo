@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import { Link } from "react-router-dom"
 import API from "../../services/api"
 import Pagination from "../../components/Pagination"
@@ -131,7 +132,7 @@ export default function ManageRestaurants() {
         fetchRestaurants()
       }
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete restaurant.")
+      toast.error(err.response?.data?.message || "Failed to delete restaurant.")
     }
   }
 

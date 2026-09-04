@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import API from "../../services/api"
 import socket from "../../services/socketService"
 import Pagination from "../../components/Pagination"
@@ -80,7 +81,7 @@ export default function ManageOrders() {
         prev.map((o) => (o._id === order._id ? { ...o, status: nextStatus } : o))
       )
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update status.")
+      toast.error(err.response?.data?.message || "Failed to update status.")
     } finally {
       setUpdatingId(null)
     }

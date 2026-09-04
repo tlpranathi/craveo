@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import API from "../services/api"
+import socket from "../services/socketService"
 import StarRating from "./StarRating"
 import { Sparkles } from "lucide-react"
 
@@ -44,6 +45,18 @@ export default function ReviewSection({ restaurantId }) {
   useEffect(() => {
     fetchReviews()
     fetchSummary()
+  }, [restaurantId])
+
+  // live updates: prepend a newly-submitted review without a refetch -
+  // the room itself is joined by the parent Menu page
+  useEffect(() => {
+    const handleReviewCreated = (payload) => {
+      if (payload.restaurantId !== restaurantId) return
+      setReviews((prev) => [payload.review, ...prev])
+      setTotalReviews((prev) => prev + 1)
+    }
+    socket.on("reviewCreated", handleReviewCreated)
+    return () => socket.off("reviewCreated", handleReviewCreated)
   }, [restaurantId])
 
   return (

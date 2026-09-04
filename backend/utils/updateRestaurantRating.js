@@ -17,17 +17,12 @@ const updateRestaurantRating = async (restaurantId) => {
     },
   ]);
 
-  if (stats.length === 0) {
-    await Restaurant.findByIdAndUpdate(restaurantId, {
-      averageRating: 0,
-      numberOfReviews: 0,
-    });
-  } else {
-    await Restaurant.findByIdAndUpdate(restaurantId, {
-      averageRating: Number(stats[0].averageRating.toFixed(1)),
-      numberOfReviews: stats[0].numberOfReviews,
-    });
-  }
+  const updated = stats.length === 0
+    ? { averageRating: 0, numberOfReviews: 0 }
+    : { averageRating: Number(stats[0].averageRating.toFixed(1)), numberOfReviews: stats[0].numberOfReviews };
+
+  await Restaurant.findByIdAndUpdate(restaurantId, updated);
+  return updated;
 };
 
 module.exports = updateRestaurantRating;

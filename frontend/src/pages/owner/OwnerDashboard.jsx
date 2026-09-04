@@ -1,25 +1,46 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Link, Outlet, useLocation } from "react-router-dom"
+import toast from "react-hot-toast"
 import API from "../../services/api"
+import socket from "../../services/socketService"
 
 export default function OwnerDashboard() {
   const location = useLocation()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await API.get("/owner/stats")
-        setStats(res.data.data)
-      } catch (err) {
-        // fail silently — stats non-critical
-      } finally {
-        setLoading(false)
-      }
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await API.get("/owner/stats")
+      setStats(res.data.data)
+    } catch (err) {
+      // fail silently — stats non-critical
+    } finally {
+      setLoading(false)
     }
-    fetchStats()
   }, [])
+
+  useEffect(() => {
+    fetchStats()
+  }, [fetchStats])
+
+  // the owner's socket is already put in restaurant_${id} room on connect
+  // (see AuthContext) - just react to the events broadcast there
+  useEffect(() => {
+    const handleStatsUpdated = () => {
+      fetchStats()
+      toast.success("An order was delivered — stats updated")
+    }
+    const handleReviewCreated = () => {
+      fetchStats()
+    }
+    socket.on("statsUpdated", handleStatsUpdated)
+    socket.on("reviewCreated", handleReviewCreated)
+    return () => {
+      socket.off("statsUpdated", handleStatsUpdated)
+      socket.off("reviewCreated", handleReviewCreated)
+    }
+  }, [fetchStats])
 
   const navItems = [
     { path: "/owner/orders", label: "Orders" },

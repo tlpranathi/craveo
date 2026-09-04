@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom"
+import { Toaster } from "react-hot-toast"
 import { AuthProvider } from "./context/AuthContext"
 import { CartProvider } from "./context/CartContext"
 import Navbar from "./components/Navbar"
@@ -30,6 +31,14 @@ function App() {
   return (
     <AuthProvider>
       <CartProvider>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: { fontSize: "0.875rem" },
+            success: { iconTheme: { primary: "#f97316", secondary: "#fff" } },
+          }}
+        />
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />

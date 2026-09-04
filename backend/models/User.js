@@ -34,6 +34,7 @@ const UserSchema = new mongoose.Schema({
     resetPasswordToken: {
         type: String,
         select: false,
+        index: { sparse: true }, // most users never have this set
     },
     resetPasswordExpires: {
         type: Date,

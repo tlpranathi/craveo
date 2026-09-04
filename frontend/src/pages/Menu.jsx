@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import API from "../services/api"
+import socket from "../services/socketService"
 import { useCart } from "../context/CartContext"
 import StarRating from "../components/StarRating"
 import ReviewSection from "../components/ReviewSection"
@@ -112,6 +113,28 @@ const Menu = () => {
 
   useEffect(() => {
     fetchRestaurantInfo();
+  }, [id]);
+
+  // live rating/review-count updates for anyone (logged-in) viewing this
+  // restaurant's page - shares the room with ReviewSection below, which
+  // listens for the same event to update its own list
+  useEffect(() => {
+    if (!id) return
+    const join = () => socket.emit("joinRestaurantRoom", id)
+    if (socket.connected) join()
+    socket.on("connect", join)
+
+    const handleReviewCreated = (payload) => {
+      if (payload.restaurantId !== id) return
+      setRestaurantInfo((prev) => prev && ({ ...prev, averageRating: payload.averageRating, numberOfReviews: payload.numberOfReviews }))
+    }
+    socket.on("reviewCreated", handleReviewCreated)
+
+    return () => {
+      socket.off("connect", join)
+      socket.off("reviewCreated", handleReviewCreated)
+      if (socket.connected) socket.emit("leaveRestaurantRoom", id)
+    }
   }, [id]);
 
   const getQuantity = (itemId) => {

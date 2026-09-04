@@ -90,6 +90,20 @@ io.on("connection", async (socket) => {
     console.log(`Socket ${socket.id} left room: order_${orderId}`)
   })
 
+  // anyone (including guests) viewing a restaurant's menu/reviews page joins
+  // this room to get live review/rating updates - kept separate from
+  // restaurant_${id} above, which also carries order-status events meant
+  // only for that restaurant's owner + admins
+  socket.on("joinRestaurantRoom", (restaurantId) => {
+    socket.join(`restaurantPublic_${restaurantId}`)
+    console.log(`Socket ${socket.id} joined room: restaurantPublic_${restaurantId}`)
+  })
+
+  socket.on("leaveRestaurantRoom", (restaurantId) => {
+    socket.leave(`restaurantPublic_${restaurantId}`)
+    console.log(`Socket ${socket.id} left room: restaurantPublic_${restaurantId}`)
+  })
+
   socket.on("disconnect", () => {
     console.log(`Socket disconnected: ${socket.id}`)
   })

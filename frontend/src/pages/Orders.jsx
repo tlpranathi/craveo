@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
+import toast from "react-hot-toast"
 import API from "../services/api"
 import Pagination from "../components/Pagination";
 import OrderReviewForm from "../components/OrderReviewForm"
@@ -64,20 +65,6 @@ export default function Orders() {
   // which order's inline review form is currently expanded, if any
   const [expandedReviewOrderId, setExpandedReviewOrderId] = useState(null)
   
-  // Add at the top of your Orders component, after your state declarations
-useEffect(() => {
-  socket.on("connect", () => console.log("Socket connected:", socket.id))
-  socket.on("disconnect", () => console.log("Socket disconnected"))
-  socket.on("orderStatusUpdated", (data) => console.log("Status update received:", data))
-
-  return () => {
-    socket.off("connect")
-    socket.off("disconnect")
-    socket.off("orderStatusUpdated")
-  }
-}, [])
-
-
   // joins each order's socket room and listens for status updates
   useEffect(() => {
     if (orders.length === 0) return
@@ -92,6 +79,10 @@ useEffect(() => {
       setOrders((prev) =>
         prev.map((o) => (o._id === orderId ? { ...o, status } : o))
       )
+      const label = status.charAt(0).toUpperCase() + status.slice(1)
+      if (status === "delivered") toast.success(`Order delivered! Enjoy your meal 🎉`)
+      else if (status === "cancelled") toast.error(`Order cancelled`)
+      else toast(`Order status: ${label}`)
     }
 
     socket.on("orderStatusUpdated", handleStatusUpdate)
@@ -161,7 +152,7 @@ useEffect(() => {
       await API.patch(`/orders/${orderId}/status`, { status: "cancelled" })
       setOrders((prev) => prev.map((o) => (o._id === orderId ? { ...o, status: "cancelled" } : o)))
     } catch (err) {
-      alert(err.response?.data?.message || "Could not cancel order.")
+      toast.error(err.response?.data?.message || "Could not cancel order.")
     }
   }
 

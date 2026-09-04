@@ -162,7 +162,14 @@ const updateOrderStatus = async (req, res, next) => {
             io.to(`order_${order._id}`).emit("orderStatusUpdated", payload)
             io.to(`restaurant_${order.restaurant._id}`).emit("orderStatusUpdated", payload)
             io.to("adminRoom").emit("orderStatusUpdated", payload)
-            
+
+            // delivery changes both revenue and the popular-items breakdown -
+            // tell owner + admin dashboards to refetch their stats rather than
+            // recomputing/duplicating the aggregation logic here
+            if (order.status === "delivered") {
+                io.to(`restaurant_${order.restaurant._id}`).emit("statsUpdated", { restaurantId: order.restaurant._id })
+                io.to("adminRoom").emit("statsUpdated", { restaurantId: order.restaurant._id })
+            }
         }
 
 

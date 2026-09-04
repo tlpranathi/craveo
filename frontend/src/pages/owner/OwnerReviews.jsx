@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import API from "../../services/api"
+import socket from "../../services/socketService"
 import StarRating from "../../components/StarRating"
 import Pagination from "../../components/Pagination"
 
@@ -32,6 +34,36 @@ export default function OwnerReviews() {
       }
     }
     fetchReviews()
+  }, [page])
+
+  // live updates: a new review came in via Socket.IO (owner's socket is
+  // auto-joined to restaurant_${id} on connect - see server.js)
+  useEffect(() => {
+    const handleReviewCreated = (payload) => {
+      toast.success("New review received")
+      setTotalReviews((prev) => prev + 1)
+      setStats((prev) => {
+        // bucket the new rating using the same thresholds the backend
+        // aggregation uses, so the breakdown bar stays consistent
+        const bucket = payload.review.rating >= 4.5 ? 5
+          : payload.review.rating >= 3.5 ? 4
+          : payload.review.rating >= 2.5 ? 3
+          : payload.review.rating >= 1.5 ? 2
+          : 1
+        return {
+          avgRating: payload.averageRating,
+          count: payload.numberOfReviews,
+          breakdown: { ...prev.breakdown, [bucket]: (prev.breakdown[bucket] || 0) + 1 },
+        }
+      })
+      // only splice into the visible list when on page 1 - otherwise this
+      // would misrepresent what page 2+ actually contains
+      if (page === 1) {
+        setReviews((prev) => [payload.review, ...prev].slice(0, PAGE_SIZE))
+      }
+    }
+    socket.on("reviewCreated", handleReviewCreated)
+    return () => socket.off("reviewCreated", handleReviewCreated)
   }, [page])
 
   if (loading) return <p className="text-gray-500 text-sm">Loading reviews...</p>

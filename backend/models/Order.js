@@ -61,4 +61,15 @@ const orderSchema = new mongoose.Schema ({
 }
 }, {timestamps: true})
 
+// getMyOrders: filters by user, sorts by createdAt desc
+orderSchema.index({ user: 1, createdAt: -1 })
+
+// getRestaurantOrders / owner stats: filters by restaurant, sorts by createdAt desc
+orderSchema.index({ restaurant: 1, createdAt: -1 })
+
+// getStats: match on { restaurant, status: "delivered" } for owners,
+// { status: "delivered" } for the admin-wide revenue aggregation
+orderSchema.index({ restaurant: 1, status: 1 })
+orderSchema.index({ status: 1 })
+
 module.exports = mongoose.model("Order", orderSchema)

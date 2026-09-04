@@ -45,4 +45,18 @@ const RestaurantSchema = new mongoose.Schema({
 
 }, {timestamps: true}) // automatically adds 2 fields - createdAt and updatedAt
 
+// Restaurant.findOne({ owner }) runs on nearly every owner-dashboard request
+// (orders, menu, reviews, stats all resolve the restaurant from the owner first)
+RestaurantSchema.index({ owner: 1 })
+
+// cuisine filter uses an anchored ^...$ regex, which an index can serve
+RestaurantSchema.index({ cuisine: 1 })
+
+// NOTE: the `search` param (name/location/cuisine) uses an unanchored,
+// case-insensitive regex for substring matching. A plain index can't speed
+// up an unanchored regex - Mongo still has to scan every candidate. A real
+// fix means either a $text index (word-based, not substring) or Atlas
+// Search, both of which change matching behavior, so left out of this pass -
+// flag if you want to tackle that separately.
+
 module.exports = mongoose.model("Restaurant", RestaurantSchema)

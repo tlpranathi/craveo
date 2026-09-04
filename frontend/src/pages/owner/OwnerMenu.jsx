@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import API from "../../services/api"
 
 const emptyForm = { name: "", price: "", description: "", image: "" }
@@ -74,7 +75,7 @@ export default function OwnerMenu() {
       await API.delete(`/owner/menu/${id}`)
       setMenu((prev) => prev.filter((m) => m._id !== id))
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete item.")
+      toast.error(err.response?.data?.message || "Failed to delete item.")
     }
   }
 

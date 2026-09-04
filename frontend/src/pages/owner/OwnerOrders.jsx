@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import API from "../../services/api"
 import socket from "../../services/socketService"
 
@@ -66,7 +67,7 @@ export default function OwnerOrders() {
       const elapsed = Date.now() - new Date(windowStart).getTime()
       if (elapsed < 60000) {
         const remaining = Math.ceil((60000 - elapsed) / 1000)
-        alert(`Please wait ${remaining} seconds before confirming — giving the customer time to cancel.`)
+        toast.error(`Please wait ${remaining} seconds before confirming — giving the customer time to cancel.`)
         return
       }
     }
@@ -78,7 +79,7 @@ export default function OwnerOrders() {
         prev.map((o) => (o._id === order._id ? { ...o, status: nextStatus } : o))
       )
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to update status.")
+      toast.error(err.response?.data?.message || "Failed to update status.")
     } finally {
       setUpdatingId(null)
     }

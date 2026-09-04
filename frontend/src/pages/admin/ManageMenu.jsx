@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import toast from "react-hot-toast"
 import { Link, useParams, useLocation } from "react-router-dom"
 import API from "../../services/api"
 
@@ -99,7 +100,7 @@ export default function ManageMenu() {
       await API.delete(`/menu/${id}`)
       setMenu((prev) => prev.filter((m) => m._id !== id))
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to delete item.")
+      toast.error(err.response?.data?.message || "Failed to delete item.")
     }
   }
 

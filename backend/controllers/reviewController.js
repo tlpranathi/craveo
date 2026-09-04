@@ -28,7 +28,20 @@ const createReview = async (req, res, next) => {
       rating,
       comment
     })
-    await updateRestaurantRating(review.restaurant);
+    const { averageRating, numberOfReviews } = await updateRestaurantRating(review.restaurant);
+
+    // populate the reviewer's name for the live feed on owner/admin/public
+    // pages - avoids each listener re-fetching just to show who wrote it
+    await review.populate("user", "name")
+
+    const io = req.app.get("io")
+    if (io) {
+      const payload = { review, restaurantId: review.restaurant, averageRating, numberOfReviews }
+      io.to(`restaurant_${review.restaurant}`).emit("reviewCreated", payload)
+      io.to("adminRoom").emit("reviewCreated", payload)
+      io.to(`restaurantPublic_${review.restaurant}`).emit("reviewCreated", payload)
+    }
+
     return sendResponse(res, 201, true, "Review added successfully.", { review })
   } catch (error) {
     next(error)
