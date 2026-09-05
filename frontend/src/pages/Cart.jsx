@@ -1,14 +1,58 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useCart } from "../context/CartContext"
 import API from "../services/api"
-import { ShoppingCart } from "lucide-react"
+import { ShoppingCart, Tag, X } from "lucide-react"
 
 export default function Cart() {
   const { cartItems, removeFromCart, updateQuantity, clearCart, totalItems, totalPrice } = useCart()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const navigate = useNavigate()
+
+  // coupon state — only one can be applied to an order at a time, so this
+  // is a single applied-coupon slot, not a list
+  const [availableCoupons, setAvailableCoupons] = useState([])
+  const [couponInput, setCouponInput] = useState("")
+  const [appliedCoupon, setAppliedCoupon] = useState(null) // { code, discountAmount, finalTotal, discountType, discountValue }
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [couponError, setCouponError] = useState("")
+
+  useEffect(() => {
+    API.get("/coupons/available")
+      .then((res) => setAvailableCoupons(res.data.data.coupons))
+      .catch(() => {}) // non-fatal — coupon picker just won't show suggestions
+  }, [])
+
+  // re-validate against the current cart total whenever it changes, so a
+  // coupon that no longer meets its min-order-value doesn't silently stay
+  // applied at a stale discount
+  useEffect(() => {
+    if (appliedCoupon) applyCoupon(appliedCoupon.code)
+  }, [totalPrice]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const applyCoupon = async (codeOverride) => {
+    const code = (codeOverride || couponInput).trim()
+    if (!code) return
+    setCouponError("")
+    setCouponLoading(true)
+    try {
+      const res = await API.post("/coupons/validate", { code, cartTotal: totalPrice })
+      setAppliedCoupon(res.data.data)
+      setCouponInput(res.data.data.code)
+    } catch (err) {
+      setAppliedCoupon(null)
+      setCouponError(err.response?.data?.message || "Could not apply coupon.")
+    } finally {
+      setCouponLoading(false)
+    }
+  }
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponInput("")
+    setCouponError("")
+  }
 
   const handlePlaceOrder = async () => {
   setError("");
@@ -27,7 +71,8 @@ export default function Cart() {
       items: cartItems.map(item => ({
         menuItemId: item._id,
         quantity: item.quantity
-      }))
+      })),
+      couponCode: appliedCoupon?.code
     });
 
     const paymentData = data.data;
@@ -169,10 +214,77 @@ export default function Cart() {
           </svg>
 
           <div className="bg-white border-x border-b border-gray-200 rounded-b-xl p-5">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-600">Total</span>
-              <span className="text-2xl font-bold text-craveo-600">₹{totalPrice}</span>
+            {/* coupon */}
+            <div className="mb-4 pb-4 border-b border-gray-100">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-craveo-50 border border-craveo-200 rounded-lg px-3 py-2.5">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Tag className="w-4 h-4 text-craveo-600" />
+                    <span className="font-mono font-semibold text-craveo-700">{appliedCoupon.code}</span>
+                    <span className="text-craveo-600">applied — ₹{appliedCoupon.discountAmount} off</span>
+                  </div>
+                  <button onClick={removeCoupon} className="text-gray-400 hover:text-gray-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Coupon code"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), applyCoupon())}
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm uppercase focus:outline-none focus:ring-2 focus:ring-craveo-400"
+                    />
+                    <button
+                      onClick={() => applyCoupon()}
+                      disabled={couponLoading || !couponInput.trim()}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition disabled:opacity-50"
+                    >
+                      {couponLoading ? "..." : "Apply"}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-red-500 text-xs mt-1.5">{couponError}</p>}
+                  {availableCoupons.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {availableCoupons.map((c) => (
+                        <button
+                          key={c._id}
+                          onClick={() => applyCoupon(c.code)}
+                          className="text-xs font-mono bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 py-1 rounded-full transition"
+                        >
+                          {c.code} · {c.discountType === "percentage" ? `${c.discountValue}%` : `₹${c.discountValue}`} off
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
+
+            {appliedCoupon ? (
+              <div className="space-y-1.5 mb-4">
+                <div className="flex justify-between items-center text-sm text-gray-500">
+                  <span>Subtotal</span>
+                  <span>₹{totalPrice}</span>
+                </div>
+                <div className="flex justify-between items-center text-sm text-green-600">
+                  <span>Discount ({appliedCoupon.code})</span>
+                  <span>−₹{appliedCoupon.discountAmount}</span>
+                </div>
+                <div className="flex justify-between items-center pt-1.5 border-t border-gray-100">
+                  <span className="text-gray-600">Total</span>
+                  <span className="text-2xl font-bold text-craveo-600">₹{appliedCoupon.finalTotal}</span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-600">Total</span>
+                <span className="text-2xl font-bold text-craveo-600">₹{totalPrice}</span>
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button onClick={clearCart} disabled={loading} className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-full font-medium hover:bg-gray-50 transition disabled:opacity-50">

@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const navItems = [
     { path: "/admin/restaurants", label: "Restaurants" },
     { path: "/admin/orders", label: "Orders" },
+    { path: "/admin/coupons", label: "Coupons" },
   ]
 
   const isActive = (path) => location.pathname.startsWith(path)

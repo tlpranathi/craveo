@@ -14,6 +14,7 @@ const reviewRoutes = require("./routes/reviewRoutes")
 const paymentRoutes = require("./routes/paymentRoutes")
 const ownerRoutes = require("./routes/ownerRoutes")
 const adminRoutes = require("./routes/adminRoutes")
+const couponRoutes = require("./routes/couponRoutes")
 const errorHandler = require("./middleware/errorHandler")
 
 const app = express()
@@ -61,6 +62,7 @@ app.use("/api/reviews", reviewRoutes)
 app.use("/api/payment", paymentRoutes)
 app.use("/api/owner", ownerRoutes)
 app.use("/api/admin", adminRoutes)
+app.use("/api/coupons", couponRoutes)
 
 app.get("/", (req, res) => {
   res.send("craveo API running")

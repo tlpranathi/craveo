@@ -36,6 +36,18 @@ const orderSchema = new mongoose.Schema ({
         required: true
     },
     items: [orderItemSchema], // stores array of ordered items
+    // pre-discount sum of items - equals totalPrice when no coupon was applied.
+    // kept mainly so the order receipt/history can show "was X, discounted to Y"
+    subtotal: {
+        type: Number
+    },
+    couponCode: {
+        type: String
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
+    },
     totalPrice: {
         type: Number,
         required: true

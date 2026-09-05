@@ -2,11 +2,13 @@ const razorpay = require("../config/razorpay")
 const sendResponse = require("../utils/response");
 const Menu = require("../models/Menu")
 const Order = require("../models/Order")
+const Coupon = require("../models/Coupon")
+const { evaluateCoupon } = require("../utils/couponUtils")
 const crypto = require("crypto");
 
 const createOrder = async(req, res, next) => {
     try {
-        const { restaurant: restaurantId, items } = req.body;
+        const { restaurant: restaurantId, items, couponCode } = req.body;
 
         // validate request
         if (!restaurantId || !items || items.length === 0) {
@@ -19,7 +21,7 @@ const createOrder = async(req, res, next) => {
         });
 
         // calculate total price securely
-        let totalPrice = 0;
+        let subtotal = 0;
         const orderItems = [];
 
         for (const item of items) {
@@ -42,7 +44,7 @@ const createOrder = async(req, res, next) => {
                 );
             }
 
-            totalPrice += menu.price * item.quantity;
+            subtotal += menu.price * item.quantity;
 
             // save snapshot of menu item in order
             orderItems.push({
@@ -53,11 +55,36 @@ const createOrder = async(req, res, next) => {
             });
         }
 
+        // apply coupon server-side — the /coupons/validate endpoint is only a
+        // pre-checkout preview for the UI; this is the one place that actually
+        // determines what gets charged, so it re-runs the same eligibility
+        // checks (active, not expired, min order value, min delivered orders)
+        // rather than trusting anything the client sent
+        let totalPrice = subtotal;
+        let discountAmount = 0;
+        let appliedCouponCode;
+        if (couponCode) {
+            const coupon = await Coupon.findOne({ code: String(couponCode).trim().toUpperCase() });
+            if (!coupon) {
+                return sendResponse(res, 400, false, "Invalid coupon code.");
+            }
+            const result = await evaluateCoupon(coupon, subtotal, req.user._id);
+            if (!result.valid) {
+                return sendResponse(res, 400, false, result.reason);
+            }
+            discountAmount = result.discountAmount;
+            totalPrice = result.finalTotal;
+            appliedCouponCode = coupon.code;
+        }
+
         // create pending order
         const order = await Order.create({
             user: req.user.id,
             restaurant: restaurantId,
             items: orderItems,
+            subtotal,
+            couponCode: appliedCouponCode,
+            discountAmount,
             totalPrice,
             status: "pending",
             payment: {
@@ -82,7 +109,10 @@ const createOrder = async(req, res, next) => {
             razorpayOrderId: razorpayOrder.id,
             amount: razorpayOrder.amount,
             currency: razorpayOrder.currency,
-            key: process.env.RAZORPAY_KEY_ID
+            key: process.env.RAZORPAY_KEY_ID,
+            subtotal,
+            discountAmount,
+            totalPrice
         });
 
     } catch(err) {

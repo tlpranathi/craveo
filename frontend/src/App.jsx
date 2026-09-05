@@ -20,6 +20,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard"
 import ManageRestaurants from "./pages/admin/ManageRestaurants"
 import ManageMenu from "./pages/admin/ManageMenu"
 import ManageOrders from "./pages/admin/ManageOrders"
+import ManageCoupons from "./pages/admin/ManageCoupons"
 import OwnerRoute from "./components/OwnerRoute"
 import OwnerDashboard from "./pages/owner/OwnerDashboard"
 import OwnerOrders from "./pages/owner/OwnerOrders"
@@ -55,6 +56,7 @@ function App() {
             <Route path="restaurants" element={<ManageRestaurants />} />
             <Route path="restaurants/:restaurantId/menu" element={<ManageMenu />} />
             <Route path="orders" element={<ManageOrders />} />
+            <Route path="coupons" element={<ManageCoupons />} />
           </Route> 
           <Route path="/owner" element={<OwnerRoute><OwnerDashboard /></OwnerRoute>}>
             <Route path="orders" element={<OwnerOrders />} />
