@@ -1,6 +1,7 @@
 const Restaurant = require("../models/Restaurant")
 const sendResponse = require("../utils/response")
 const AppError = require("../utils/AppError")
+const { cloudinary, isConfigured: cloudinaryConfigured } = require("../config/cloudinary")
 const { escapeRegex, resolveLocationAliases } = require("../utils/searchHelpers")
 
 // GET all restaurants with optional search + cuisine filters
@@ -123,16 +124,28 @@ const deleteRestaurant = async(req, res, next) => {
 
 module.exports = { getRestaurants, getRandomRestaurants, createRestaurant, updateRestaurant, deleteRestaurant, getRestaurantById, uploadImage }
 
-// admin uploads an image file and gets back a URL to store on a restaurant/menu item
+// admin uploads an image file, we stream it to Cloudinary and return a permanent
+// CDN URL to store on a restaurant/menu item
 function uploadImage(req, res, next) {
   try {
     if (!req.file) {
       return sendResponse(res, 400, false, "No image file provided")
     }
-    // BACKEND_URL should be set in env for production so the returned URL is absolute and actually loads from the deployed backend, not localhost
-    const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`
-    const url = `${baseUrl}/uploads/${req.file.filename}`
-    return sendResponse(res, 200, true, "Image uploaded successfully", { url })
+    if (!cloudinaryConfigured) {
+      return sendResponse(res, 503, false, "Image storage is not configured")
+    }
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "craveo/uploads",
+        resource_type: "image",
+        transformation: [{ width: 800, crop: "limit", quality: "auto" }],
+      },
+      (error, result) => {
+        if (error) return next(error)
+        return sendResponse(res, 200, true, "Image uploaded successfully", { url: result.secure_url })
+      }
+    )
+    stream.end(req.file.buffer)
   } catch (error) {
     next(error)
   }
